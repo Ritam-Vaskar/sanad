@@ -80,7 +80,54 @@ function BorrowerFrame({ children }: { children: ReactNode }) {
   const language = useDemoStore((state) => state.language)
   const messages = getMessages(language)
   const tabs = [{ label: messages.nav.passport, href: '/borrower', icon: WalletCards }, { label: messages.nav.assistant, href: '/borrower/assistant', icon: Blocks }, { label: messages.nav.activity, href: '/borrower/activity', icon: Compass }, { label: messages.nav.profile, href: '/borrower/profile', icon: Building2 }]
-  return <div className="min-h-screen bg-background px-0 py-0 sm:px-4 sm:py-4"><div className="mx-auto flex h-screen w-full max-w-[430px] flex-col overflow-hidden border-x border-border bg-background shadow-2xl shadow-black/30 sm:h-[calc(100vh-2rem)] sm:rounded-[30px] sm:border"><header className="sticky top-0 z-20 flex h-16 shrink-0 items-center justify-between border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl"><Link href="/borrower" className="flex items-center gap-2" aria-label="SANAD passport"><span className="grid size-8 place-items-center rounded-xl bg-primary text-background"><ShieldCheck className="size-4" /></span><span className="text-xs font-semibold tracking-[0.18em]">SANAD</span><span className="ml-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-[9px] text-primary">{messages.nav.passport}</span></Link><div className="flex items-center gap-1"><LanguageToggle /><RoleSwitcher /></div></header><main id="borrower-main" className="min-h-0 flex-1 overflow-y-auto px-4 py-5">{children}<DemoPanel key={pathname} inline /><PortalFooter /></main><nav aria-label="Primary navigation" className="z-20 grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl">{tabs.map((tab) => { const Icon = tab.icon; const active = isActive(pathname, tab.href); return <Link key={tab.href} href={tab.href} aria-current={active ? 'page' : undefined} className={`flex flex-col items-center gap-1 rounded-xl py-1.5 text-[9px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${active ? 'text-primary' : 'text-muted-foreground'}`}><Icon className="size-4" />{tab.label}</Link> })}</nav></div></div>
+  return <div className="min-h-dvh bg-background px-0 py-0 sm:px-4 sm:py-4 md:px-0 md:py-0">
+    <div className="mx-auto flex h-dvh w-full max-w-[430px] flex-col overflow-hidden border-x border-border bg-background shadow-2xl shadow-black/30 sm:h-[calc(100dvh-2rem)] sm:max-w-[720px] sm:rounded-[30px] sm:border md:h-dvh md:max-w-none md:rounded-none md:border-0 md:shadow-none">
+      <header className="z-20 flex h-16 shrink-0 items-center justify-between border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl sm:px-6 md:px-8 lg:px-10">
+        <Link href="/borrower" className="flex items-center gap-2" aria-label="SANAD passport">
+          <span className="grid size-8 place-items-center rounded-xl bg-primary text-background"><ShieldCheck className="size-4" /></span>
+          <span className="text-xs font-semibold tracking-[0.18em]">SANAD</span>
+          <span className="ml-1 rounded-full border border-primary/20 bg-primary/5 px-2 py-1 text-[9px] text-primary">{messages.nav.passport}</span>
+        </Link>
+        <div className="flex items-center gap-1"><LanguageToggle /><RoleSwitcher /></div>
+      </header>
+      <div className="mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 md:overflow-hidden">
+        <aside className="hidden h-full w-60 shrink-0 flex-col border-r border-border px-4 py-5 md:flex">
+          <div className="flex items-center gap-2 px-3 pb-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <WalletCards className="size-4 text-primary" />Borrower workspace
+          </div>
+          <nav aria-label="Borrower workspace navigation" className="grid gap-1">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              const active = isActive(pathname, tab.href)
+              return <Link key={tab.href} href={tab.href} aria-current={active ? 'page' : undefined} className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-xs transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${active ? 'bg-primary/10 font-medium text-primary' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
+                <Icon className="size-4 shrink-0" /><span>{tab.label}</span>{active && <ChevronRight className="ml-auto size-3" />}
+              </Link>
+            })}
+          </nav>
+          <div className="mt-auto rounded-xl border border-border bg-surface p-3">
+            <div className="flex items-center gap-2 text-[10px] font-medium"><span className="size-1.5 rounded-full bg-success" />Borrower-owned passport</div>
+            <p className="mt-1 text-[10px] leading-4 text-muted-foreground">Share only the proofs you approve.</p>
+          </div>
+        </aside>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <main id="borrower-main" className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 md:px-8 md:py-7 lg:px-10">
+            <div className="mx-auto w-full max-w-[1280px]">
+              {children}
+              <DemoPanel key={pathname} inline />
+              <PortalFooter />
+            </div>
+          </main>
+          <nav aria-label="Primary navigation" className="z-20 grid shrink-0 grid-cols-4 border-t border-border bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 backdrop-blur-xl md:hidden">
+            {tabs.map((tab) => {
+              const Icon = tab.icon
+              const active = isActive(pathname, tab.href)
+              return <Link key={tab.href} href={tab.href} aria-current={active ? 'page' : undefined} className={`flex flex-col items-center gap-1 rounded-xl py-1.5 text-[9px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${active ? 'text-primary' : 'text-muted-foreground'}`}><Icon className="size-4" />{tab.label}</Link>
+            })}
+          </nav>
+        </div>
+      </div>
+    </div>
+  </div>
 }
 
 function navigationFor(path: string, kind: PortalKind) {
