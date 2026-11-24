@@ -32,7 +32,7 @@ export function BorrowerApp({ path }: { path: string }) {
     },
   })
 
-  if (query.isLoading) return <BorrowerSkeleton rows={3} />
+  if (query.isLoading) return <BorrowerSkeleton rows={4} />
   if (query.isError) return <BorrowerError retry={() => { void query.refetch() }} message={query.error instanceof Error ? query.error.message : undefined} />
   if (path === '/borrower/onboarding') return <OnboardingFlow />
   if (!walletCreated || !walletUnlocked) return <OnboardingFlow />

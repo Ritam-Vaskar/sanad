@@ -10,7 +10,7 @@ import { useDemoStore } from '@/lib/store/demo-store'
 
 export function PortalQueryState({ loading, error, retry, children }: { loading: boolean; error: boolean; retry: () => void; children: ReactNode }) {
   const language = useDemoStore((state) => state.language)
-  if (loading) return <Skeletons rows={4} />
+  if (loading) return <div className="min-h-[calc(100dvh-2rem)]"><Skeletons rows={4} /></div>
   if (error) return <Card role="alert" className="border-danger/30"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="size-4 text-danger" />{translatePortalPhrase(language, 'Unable to load this workspace')}</CardTitle><CardDescription>{translatePortalPhrase(language, 'The mock API did not return the portal data. Your shared records have not been changed.')}</CardDescription></CardHeader><CardContent><Button size="sm" variant="outline" onClick={retry}><RotateCcw data-icon="inline-start" />{translatePortalPhrase(language, 'Try again')}</Button></CardContent></Card>
   return children
 }

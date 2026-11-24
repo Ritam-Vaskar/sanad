@@ -12,14 +12,14 @@ import { EmptyState } from '@/components/shared/primitives'
 type Column<T> = { key: keyof T; label: string; render?: (row: T) => ReactNode }
 
 export function BottomSheet({ title, description, trigger, children }: { title: string; description: string; trigger: ReactElement; children: ReactNode }) {
-  return <Sheet><SheetTrigger render={trigger} /><SheetContent side="bottom" className="max-h-[85vh] overflow-y-auto rounded-t-3xl border-border bg-surface"><SheetHeader className="mx-auto w-full max-w-xl text-left"><SheetTitle>{title}</SheetTitle><SheetDescription>{description}</SheetDescription></SheetHeader><div className="mx-auto mt-5 w-full max-w-xl">{children}</div></SheetContent></Sheet>
+  return <Sheet><SheetTrigger render={trigger} /><SheetContent side="bottom" className="max-h-[85dvh] overflow-y-auto rounded-t-3xl border-border bg-surface"><SheetHeader className="mx-auto w-full max-w-xl text-left"><SheetTitle>{title}</SheetTitle><SheetDescription>{description}</SheetDescription></SheetHeader><div className="mx-auto mt-5 w-full max-w-xl">{children}</div></SheetContent></Sheet>
 }
 
 export function ConfirmDialog({ title, description, confirmLabel = 'Confirm', trigger, onConfirm, children, confirmDisabled = false }: { title: string; description: string; confirmLabel?: string; trigger: ReactElement; onConfirm: () => void; children?: ReactNode; confirmDisabled?: boolean }) {
   return <Dialog><DialogTrigger render={trigger} /><DialogContent><DialogHeader><DialogTitle>{title}</DialogTitle><DialogDescription>{description}</DialogDescription></DialogHeader>{children}<DialogFooter><DialogClose render={<Button variant="outline" />}>Cancel</DialogClose><DialogClose render={<Button variant="destructive" onClick={onConfirm} disabled={confirmDisabled} />}>{confirmLabel}</DialogClose></DialogFooter></DialogContent></Dialog>
 }
 
-export function DataTable<T extends Record<string, unknown>>({ rows, columns, pageSize = 5 }: { rows: T[]; columns: Column<T>[]; pageSize?: number }) {
+export function DataTable<T extends Record<string, unknown>>({ rows, columns, pageSize = 10 }: { rows: T[]; columns: Column<T>[]; pageSize?: number }) {
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState<{ key: keyof T; direction: 'asc' | 'desc' } | null>(null)
   const [page, setPage] = useState(0)
