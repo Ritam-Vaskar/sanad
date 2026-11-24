@@ -1,17 +1,20 @@
 'use client'
 
 import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { useDemoStore } from '@/lib/store/demo-store'
+import { translatePortalPhrase } from '@/lib/i18n'
 import { Button } from '@/components/ui/button'
 
-const roleRoutes = { Borrower: '/borrower', Issuer: '/issuer/issuer-kyc', Lender: '/lender/lender-a', 'Trust Admin': '/admin', Explorer: '/explorer', 'Attack Lab': '/lab' }
+const roleRoutes = { Borrower: '/borrower', Issuer: '/issuer/issuer-kyc', Lender: '/lender/lender-a', 'Trust Admin': '/admin', Explorer: '/explorer', 'Attack Lab': '/lab', 'Design system': '/design' }
 const coreIssuerIds = new Set(['issuer-kyc', 'issuer-gig', 'issuer-aa'])
 
 export function RoleSwitcher() {
   const router = useRouter()
   const pathname = usePathname()
-  const role = pathname.startsWith('/issuer') || ['/issue', '/credentials', '/status', '/keys', '/activity'].includes(pathname) ? 'Issuer' : pathname.startsWith('/lender') || pathname.startsWith('/requests/') || ['/requests', '/policy', '/issuers', '/offers', '/compliance', '/settings'].includes(pathname) ? 'Lender' : pathname.startsWith('/admin') ? 'Trust Admin' : pathname.startsWith('/explorer') ? 'Explorer' : pathname.startsWith('/lab') ? 'Attack Lab' : 'Borrower'
-  return <label><span className="sr-only">Switch portal</span><select aria-label="Switch portal" value={role} onChange={(event) => router.push(roleRoutes[event.target.value as keyof typeof roleRoutes])} className="h-8 max-w-28 rounded-lg border border-border bg-surface px-2 text-[11px] text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary"><option>Borrower</option><option>Issuer</option><option>Lender</option><option>Trust Admin</option><option>Explorer</option><option>Attack Lab</option></select></label>
+  const language = useDemoStore((state) => state.language)
+  const role = pathname.startsWith('/issuer') || ['/issue', '/credentials', '/status', '/keys', '/activity'].includes(pathname) ? 'Issuer' : pathname.startsWith('/lender') || pathname.startsWith('/requests/') || ['/requests', '/policy', '/issuers', '/offers', '/compliance', '/settings'].includes(pathname) ? 'Lender' : pathname.startsWith('/admin') ? 'Trust Admin' : pathname.startsWith('/explorer') ? 'Explorer' : pathname.startsWith('/lab') ? 'Attack Lab' : pathname.startsWith('/design') ? 'Design system' : 'Borrower'
+  return <label><span className="sr-only">Switch portal</span><select aria-label="Switch portal" value={role} onChange={(event) => router.push(roleRoutes[event.target.value as keyof typeof roleRoutes])} className="h-8 max-w-28 rounded-lg border border-border bg-surface px-2 text-[11px] text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-primary">{Object.keys(roleRoutes).map((portal) => <option key={portal} value={portal}>{translatePortalPhrase(language, portal)}</option>)}</select></label>
 }
 
 export function EntitySwitcher({ kind, path }: { kind: 'issuer' | 'lender'; path: string }) {
@@ -47,5 +50,6 @@ export function LanguageToggle() {
   const language = useDemoStore((state) => state.language)
   const setLanguage = useDemoStore((state) => state.setLanguage)
   const hasHydrated = useDemoStore((state) => state.hasHydrated)
+  useEffect(() => { document.documentElement.lang = language }, [language])
   return <Button variant="ghost" size="sm" aria-label="Toggle language between English and Hindi" disabled={!hasHydrated} onClick={() => setLanguage(language === 'en' ? 'hi' : 'en')} className="font-mono text-xs">{hasHydrated ? language === 'en' ? 'EN' : 'हि' : '···'}</Button>
 }

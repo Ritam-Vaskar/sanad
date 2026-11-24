@@ -3,6 +3,7 @@ export type BorrowerLanguage = 'en' | 'hi'
 const hindi: Record<string, string> = {
   Passport: 'पासपोर्ट', Assistant: 'सहायक', Activity: 'गतिविधि', Profile: 'प्रोफ़ाइल',
   'Good morning': 'सुप्रभात', 'Your verified proofs': 'आपके सत्यापित प्रमाण',
+  'Open your passport': 'अपना पासपोर्ट खोलें',
   'Verified proofs': 'सत्यापित प्रमाण', 'Active permissions': 'सक्रिय अनुमतियाँ',
   'Wallet ready': 'वॉलेट तैयार', 'Add proof': 'प्रमाण जोड़ें', 'See all proofs': 'सभी प्रमाण देखें',
   'Shared by default': 'डिफ़ॉल्ट रूप से साझा', 'Valid until': 'तक मान्य',

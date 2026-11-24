@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, type ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Check, Copy, ShieldCheck, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -53,18 +53,8 @@ export function TxChip({ value, block }: { value: string; block?: number }) {
 
 export function StatCard({ label, value, change, icon, accent = 'teal' }: { label: string; value: number | string; change?: string; icon?: ReactNode; accent?: 'teal' | 'amber' | 'violet' }) {
   const reduced = useReducedMotion()
-  const numeric = typeof value === 'number' ? value : null
-  const [count, setCount] = useState(reduced || numeric === null ? numeric ?? 0 : 0)
-  useEffect(() => {
-    if (numeric === null || reduced) return
-    let frame = 0
-    const start = performance.now()
-    const tick = (now: number) => { const progress = Math.min((now - start) / 650, 1); setCount(Math.round(numeric * (1 - (1 - progress) ** 3))); if (progress < 1) frame = requestAnimationFrame(tick) }
-    frame = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(frame)
-  }, [numeric, reduced])
   const color = accent === 'amber' ? 'text-accent' : accent === 'violet' ? 'text-chain' : 'text-primary'
-  return <motion.div initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}><Card className="border-border/80 bg-card/80"><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><span className={color}>{icon}</span></CardHeader><CardContent><div className="text-2xl font-semibold tracking-tight">{numeric === null ? value : count.toLocaleString('en-IN')}</div>{change && <p className="mt-1 text-xs text-muted-foreground">{change}</p>}</CardContent></Card></motion.div>
+  return <motion.div initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.28 }}><Card className="border-border/80 bg-card/80"><CardHeader className="flex-row items-center justify-between pb-2"><CardTitle className="text-xs font-medium text-muted-foreground">{label}</CardTitle><span className={color}>{icon}</span></CardHeader><CardContent><div className="text-2xl font-semibold tracking-tight">{typeof value === 'number' ? value.toLocaleString('en-IN') : value}</div>{change && <p className="mt-1 text-xs text-muted-foreground">{change}</p>}</CardContent></Card></motion.div>
 }
 
 export function EmptyState({ title, description, action }: { title: string; description: string; action?: ReactNode }) {

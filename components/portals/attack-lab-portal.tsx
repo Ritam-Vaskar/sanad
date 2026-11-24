@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { ArrowDownToLine, Ban, FlaskConical, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import { getAttackScenarios } from '@/lib/api/mock-api'
+import { evaluateAttackScenario } from '@/lib/verification'
+import { downloadJsonFile } from '@/lib/download'
 import { useDemoStore } from '@/lib/store/demo-store'
 import type { AttackScenario } from '@/types'
 import { Button } from '@/components/ui/button'
@@ -13,31 +15,7 @@ import { EmptyState, PipelineViz, StatCard, StatusBadge } from '@/components/sha
 import { DataTable } from '@/components/shared/overlays'
 import { PortalHeading, PortalQueryState, SectionHeading } from './portal-shared'
 
-const stages = ['Request received', 'Signature', 'Issuer trust', 'Expiry', 'Revocation status', 'Key binding', 'Nonce', 'Mandate and policy rules', 'Result']
-const failureStageById: Record<string, number> = {
-  'tamper-income': 1,
-  'untrusted-issuer': 2,
-  'expired-kyc': 3,
-  'replay-presentation': 6,
-  'over-cap': 7,
-  'disclose-employer': 7,
-  'unsigned-accept': 8,
-  'revoke-mid-run': 4,
-  'unbound-holder': 5,
-  'lender-not-in-mandate': 7,
-}
-const failureReasons: Record<string, string> = {
-  'tamper-income': 'The changed claim no longer matches the issuer signature.',
-  'untrusted-issuer': 'This issuer is not active in the trusted registry.',
-  'expired-kyc': 'The credential validity window has ended.',
-  'replay-presentation': 'The request nonce was already consumed.',
-  'over-cap': 'The requested amount exceeds the signed mandate cap.',
-  'disclose-employer': 'Employer data is outside the borrower-approved disclosure set.',
-  'unsigned-accept': 'Offer acceptance requires an explicit borrower signature.',
-  'revoke-mid-run': 'Revocation invalidates the in-flight mandate before the next disclosure.',
-  'unbound-holder': 'The proof subject does not match the borrower who signed the mandate.',
-  'lender-not-in-mandate': 'This lender is outside the borrower-approved lender list.',
-}
+const stages = ['Request received', 'Signature', 'Issuer trust', 'Expiry', 'Revocation status', 'Key binding', 'Nonce', 'Mandate and policy rules', 'Run execution', 'Offer acceptance', 'Result']
 
 type ScenarioResult = { id: string; scenarioId: string; title: string; stage: string; rule: string; timestamp: string; result: 'Blocked' }
 type PipelineProgress = { scenarioId: string; activeIndex: number; failedIndex: number; complete: boolean }
@@ -61,20 +39,22 @@ export function AttackLabPortal() {
   const executedIds = new Set(results.map((result) => result.scenarioId))
 
   async function playScenario(scenario: AttackScenario) {
-    const failedIndex = failureStageById[scenario.id] ?? 7
+    const evaluation = evaluateAttackScenario(scenario)
+    const { failedIndex } = evaluation
     setProgress({ scenarioId: scenario.id, activeIndex: -1, failedIndex, complete: false })
     for (let index = 0; index <= failedIndex; index += 1) {
       await wait(Math.max(35, 125 / speed))
       setProgress({ scenarioId: scenario.id, activeIndex: index, failedIndex, complete: false })
     }
     await wait(Math.max(35, 125 / speed))
+    const resultTime = new Date()
     const result: ScenarioResult = {
-      id: `${scenario.id}-${results.length + 1}`,
+      id: `${scenario.id}-${resultTime.getTime()}`,
       scenarioId: scenario.id,
       title: scenario.title,
-      stage: stages[failedIndex] ?? 'Mandate and policy rules',
-      rule: scenario.rule,
-      timestamp: new Date().toISOString(),
+      stage: stages[failedIndex],
+      rule: evaluation.rule,
+      timestamp: resultTime.toISOString(),
       result: 'Blocked',
     }
     setProgress({ scenarioId: scenario.id, activeIndex: failedIndex, failedIndex, complete: true })
@@ -85,18 +65,28 @@ export function AttackLabPortal() {
     if (runningRef.current) return
     runningRef.current = true
     setIsRunning(true)
-    await playScenario(scenario)
-    runningRef.current = false
-    setIsRunning(false)
+    try {
+      await playScenario(scenario)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'The scenario could not be evaluated.')
+    } finally {
+      runningRef.current = false
+      setIsRunning(false)
+    }
   }
 
   async function runAll() {
     if (runningRef.current) return
     runningRef.current = true
     setIsRunning(true)
-    for (const scenario of scenarios) await playScenario(scenario)
-    runningRef.current = false
-    setIsRunning(false)
+    try {
+      for (const scenario of scenarios) await playScenario(scenario)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'The scenarios could not be evaluated.')
+    } finally {
+      runningRef.current = false
+      setIsRunning(false)
+    }
   }
 
   const resultRows = results.map((result) => ({ ...result, timestamp: displayTime(result.timestamp) }))
@@ -135,14 +125,14 @@ export function AttackLabPortal() {
           <CardContent className="grid gap-4">
             {progress ? <>
               <div><p className="text-xs font-semibold">{scenarios.find((scenario) => scenario.id === progress.scenarioId)?.title}</p><p className="mt-1 text-[10px] text-muted-foreground">{progress.complete ? 'Simulation complete' : 'Evaluating request…'}</p></div>
-              <PipelineViz stages={stages} activeIndex={progress.activeIndex} failedIndex={progress.failedIndex} failureRule={scenarios.find((scenario) => scenario.id === progress.scenarioId)?.rule} failureReason={failureReasons[progress.scenarioId]} />
+              <PipelineViz stages={stages} activeIndex={progress.activeIndex} failedIndex={progress.failedIndex} failureRule={scenarios.find((scenario) => scenario.id === progress.scenarioId)?.rule} failureReason={scenarios.find((scenario) => scenario.id === progress.scenarioId) ? evaluateAttackScenario(scenarios.find((scenario) => scenario.id === progress.scenarioId)!).failureReason : undefined} />
               {progress.complete && <div role="status" className="flex items-center justify-between rounded-xl border border-danger/25 bg-danger/[0.06] px-3 py-2"><span className="text-xs font-semibold text-danger">Final result</span><StatusBadge status="failed" label="Blocked" /></div>}
             </> : <EmptyState title="Pipeline is ready" description="Run any scenario to watch its checks pass in order and stop at the first violated rule." />}
           </CardContent>
         </Card>
       </div>
       <Card>
-        <CardHeader className="flex-row items-center justify-between gap-3"><SectionHeading title="Scenario results" description="Each completed run records the first failing stage, guardrail rule and timestamp." /><Button variant="outline" size="sm" onClick={() => toast.success('Results export is simulated in this prototype.')}><ArrowDownToLine data-icon="inline-start" />Export results</Button></CardHeader>
+        <CardHeader className="flex-row items-center justify-between gap-3"><SectionHeading title="Scenario results" description="Each completed run records the first failing stage, guardrail rule and timestamp." /><Button variant="outline" size="sm" disabled={!results.length} onClick={() => downloadJsonFile('sanad-attack-lab-results.json', results)}><ArrowDownToLine data-icon="inline-start" />Export results</Button></CardHeader>
         <CardContent>{resultRows.length ? <DataTable rows={resultRows} columns={resultColumns} pageSize={10} /> : <EmptyState title="No scenarios run yet" description="Run a scenario or use Run all. Every case should finish as Blocked at its mapped policy stage." />}</CardContent>
       </Card>
     </div>

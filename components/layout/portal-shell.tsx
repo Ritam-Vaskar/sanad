@@ -5,7 +5,7 @@ import { useEffect, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { Bell, Blocks, Building2, ChevronRight, Compass, FlaskConical, Landmark, LayoutDashboard, ShieldCheck, WalletCards } from 'lucide-react'
 import { useDemoStore } from '@/lib/store/demo-store'
-import { getMessages } from '@/lib/i18n'
+import { getMessages, translatePortalPhrase } from '@/lib/i18n'
 import { startChainFeed } from '@/lib/sim/chainFeed'
 import { DemoPanel } from './demo-panel'
 import { EntitySwitcher, LanguageToggle, RoleSwitcher } from './topbar-controls'
@@ -49,8 +49,26 @@ function PortalLink({ item, active, compact = false }: { item: NavItem; active: 
 
 function TopBar({ kind, path }: { kind: PortalKind; path: string }) {
   const Icon = icons[kind]
-  const title = portalTitles[kind]
-  return <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-4 border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl sm:px-6"><div className="flex min-w-0 items-center gap-3"><Link href="/" aria-label="SANAD home" className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary text-background"><ShieldCheck className="size-4" /></Link><span className="hidden text-[10px] font-semibold tracking-[0.18em] text-foreground/90 sm:inline">SANAD</span><span className="hidden h-5 w-px bg-border sm:block" /><span className="flex min-w-0 items-center gap-2 text-xs font-medium"><Icon className="size-4 shrink-0 text-primary" /><span className="truncate">{title}</span></span></div><div className="flex shrink-0 items-center gap-1"><>{(kind === 'issuer' || kind === 'lender') && <EntitySwitcher kind={kind} path={path} />}<RoleSwitcher /><LanguageToggle /><button type="button" aria-label="Notifications" className="relative grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"><Bell className="size-4" /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent" /></button></></div></header>
+  const language = useDemoStore((state) => state.language)
+  const title = translatePortalPhrase(language, portalTitles[kind])
+  const isFeedPortal = kind === 'explorer' || kind === 'lab'
+  const updatesHref = kind === 'borrower' ? '/borrower/activity' : kind === 'issuer' ? '/activity' : kind === 'lender' ? '/requests' : kind === 'admin' ? '/admin/audit' : isFeedPortal ? '/explorer#live-feed' : '/lab'
+  return <header className="sticky top-0 z-20 flex min-h-16 items-center justify-between gap-4 border-b border-border/80 bg-background/90 px-4 backdrop-blur-xl sm:px-6">
+    <div className="flex min-w-0 items-center gap-3">
+      <Link href="/" aria-label="SANAD home" className="grid size-8 shrink-0 place-items-center rounded-xl bg-primary text-background"><ShieldCheck className="size-4" /></Link>
+      <span className="hidden text-[10px] font-semibold tracking-[0.18em] text-foreground/90 sm:inline">SANAD</span>
+      <span className="hidden h-5 w-px bg-border sm:block" />
+      <span className="flex min-w-0 items-center gap-2 text-xs font-medium"><Icon className="size-4 shrink-0 text-primary" /><span className="truncate">{title}</span></span>
+    </div>
+    <div className="flex shrink-0 items-center gap-1">
+      {(kind === 'issuer' || kind === 'lender') && <EntitySwitcher kind={kind} path={path} />}
+      <RoleSwitcher />
+      <LanguageToggle />
+      <Link href={updatesHref} aria-label={isFeedPortal ? 'Open chain feed' : 'Open recent activity'} className="relative grid size-8 place-items-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground">
+        <Bell className="size-4" /><span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-accent" />
+      </Link>
+    </div>
+  </header>
 }
 
 function PortalFooter() {
@@ -80,11 +98,12 @@ function navigationFor(path: string, kind: PortalKind) {
 export function PortalShell({ path, children }: { path: string; children: ReactNode }) {
   const kind = resolveKind(path)
   const pathname = usePathname()
+  const language = useDemoStore((state) => state.language)
   const liveFeed = useDemoStore((state) => state.liveFeed)
   const Icon = icons[kind]
   useEffect(() => { if (!liveFeed) return; return startChainFeed() }, [liveFeed])
   if (kind === 'borrower') return <BorrowerFrame>{children}</BorrowerFrame>
-  const items = navigationFor(path, kind)
+  const items = navigationFor(path, kind).map((item) => ({ ...item, label: translatePortalPhrase(language, item.label) }))
   const fullBleed = kind === 'explorer' || kind === 'lab' || kind === 'design'
   return <div className="min-h-screen bg-background"><TopBar kind={kind} path={path} />{fullBleed ? <><nav aria-label={`${kind} navigation`} className="mx-auto flex max-w-[1500px] gap-1 overflow-x-auto px-4 py-3 sm:px-7">{items.map((item) => <PortalLink key={item.href} item={item} active={isActive(pathname, item.href)} compact />)}</nav><main className="mx-auto min-h-[calc(100vh-150px)] max-w-[1500px] px-4 py-6 pb-24 sm:px-7 sm:py-8">{children}<DemoPanel key={path} inline /></main><PortalFooter /></> : <div className="mx-auto grid max-w-[1500px] md:grid-cols-[220px_minmax(0,1fr)]"><aside className="sticky top-16 hidden h-[calc(100vh-4rem)] flex-col border-r border-border px-4 py-5 md:flex"><div className="flex items-center gap-2 px-3 pb-4 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground"><Icon className="size-4 text-primary" />{kind} workspace</div><nav aria-label={`${kind} workspace navigation`} className="grid gap-1">{items.map((item) => <PortalLink key={item.href} item={item} active={isActive(pathname, item.href)} />)}</nav><div className="mt-auto rounded-xl border border-border bg-surface p-3"><div className="flex items-center gap-2 text-[10px] font-medium"><span className="size-1.5 rounded-full bg-success" />Base Sepolia testnet</div><p className="mt-1 text-[10px] leading-4 text-muted-foreground">Synthetic demo data · no real lending</p></div></aside><div className="min-w-0"><nav aria-label={`${kind} mobile navigation`} className="flex gap-1 overflow-x-auto border-b border-border px-3 py-2 md:hidden">{items.map((item) => <PortalLink key={item.href} item={item} active={isActive(pathname, item.href)} compact />)}</nav><main className="min-h-[calc(100vh-150px)] px-4 py-6 pb-32 sm:px-6 sm:py-8">{children}<DemoPanel key={path} inline /></main><PortalFooter /></div></div>}</div>
 }

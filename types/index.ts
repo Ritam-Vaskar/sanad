@@ -15,6 +15,7 @@ export type ConsentReceipt = { id: string; mandateId: string; lenderId: string; 
 export type ChainEvent = { id: string; type: string; txHash: string; block: number; timestamp: string; decoded: Record<string, string | number | boolean> }
 export type LenderRequest = { id: string; lenderId: string; borrowerAlias: string; receivedAt: string; status: string; checks: { name: string; passed: boolean; reason: string }[]; disclosedClaims: string[]; withheldClaims: string[]; underwriting: { foir: number; riskScore: number; riskSegment: string; riskBreakdown: { label: string; score: number }[]; policyChecks: { rule: string; threshold: string; value: string; passed: boolean }[] }; offerId?: string; subjectId?: string; credentialIds?: string[]; auditHash?: string; result?: string }
 export type DemoSpeed = 1 | 2 | 4
+export type WalletVault = { salt: string; iv: string; ciphertext: string; publicKey: JsonWebKey }
 
 export type ActivityEntry = { id: string; timestamp: string; type?: string; mandateId?: string; lenderId?: string; categories?: string[]; requestId?: string; commitmentHash?: string; txHash?: string; block?: number; credentialId?: string; description?: string }
 export type StatusList = { issuerId: string; listId: string; bitLength: number; bits: number[]; revokedIndices: number[]; listHash: string; lastOnChainRootTx: string }

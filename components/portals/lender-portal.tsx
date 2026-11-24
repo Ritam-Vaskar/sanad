@@ -38,7 +38,7 @@ function subjectIdFor(request: LenderRequest) {
 function requestOutcome(request: LenderRequest): OfferOutcome {
   if (request.status === 'accepted') return 'accepted'
   if (request.status === 'expired') return 'expired'
-  if (request.status === 'rejected') return 'declined'
+  if (request.status === 'rejected' || request.status === 'revoked') return 'declined'
   if (request.status === 'offered' || request.status === 'verified') return 'viewed'
   return 'sent'
 }
@@ -84,7 +84,7 @@ export function LenderPortal({ path }: { path: string }) {
 
 function LenderOverview({ lender, requests, offers }: { lender: Lender; requests: LenderRequest[]; offers: ReturnType<typeof useDemoStore.getState>['offers'] }) {
   const verified = requests.filter((request) => ['verified', 'offered', 'accepted'].includes(request.status)).length
-  const rejected = requests.filter((request) => request.status === 'rejected').length
+  const rejected = requests.filter((request) => request.status === 'rejected' || request.status === 'revoked').length
   const sent = requests.filter((request) => request.status === 'offered' || request.status === 'accepted').length
   const accepted = requests.filter((request) => request.status === 'accepted').length
   const rows = [...requests].sort((a, b) => b.receivedAt.localeCompare(a.receivedAt)).map((request) => ({ id: request.id, borrower: request.borrowerAlias, received: formatDate(request.receivedAt, 'd MMM, HH:mm'), status: request.status, result: requestResult(request) }))
@@ -97,7 +97,7 @@ function RequestsPage({ lender, requests }: { lender: Lender; requests: LenderRe
   const filtered = requests.filter((request) => statusFilter === 'all' || request.status === statusFilter)
   const rows = [...filtered].sort((a, b) => b.receivedAt.localeCompare(a.receivedAt)).map((request) => ({ id: request.id, status: request.status, borrower: request.borrowerAlias, received: formatDate(request.receivedAt, 'd MMM yyyy, HH:mm'), result: requestResult(request) }))
   const columns = [{ key: 'status' as const, label: 'Status', render: (row: (typeof rows)[number]) => <StatusBadge status={row.status} /> }, { key: 'borrower' as const, label: 'Borrower alias' }, { key: 'received' as const, label: 'Received' }, { key: 'result' as const, label: 'Verification result' }, { key: 'id' as const, label: 'Details', render: (row: (typeof rows)[number]) => <Button size="xs" variant="outline" nativeButton={false} render={<Link href={`/lender/${lender.id}/requests/${row.id}`} />}>Review</Button> }]
-  return <Card><CardHeader><SectionHeading title="Request queue" description="Search, sort, and filter every incoming presentation by its current review status." action={<label className="grid gap-1 text-[10px] text-muted-foreground">Status filter<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-9 min-w-36 rounded-lg border border-border bg-background px-3 text-xs text-foreground"><option value="all">All statuses</option><option value="offered">Offered</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="accepted">Accepted</option><option value="expired">Expired</option></select></label>} /></CardHeader><CardContent><DataTable rows={rows} columns={columns} pageSize={10} /></CardContent></Card>
+  return <Card><CardHeader><SectionHeading title="Request queue" description="Search, sort, and filter every incoming presentation by its current review status." action={<label className="grid gap-1 text-[10px] text-muted-foreground">Status filter<select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)} className="h-9 min-w-36 rounded-lg border border-border bg-background px-3 text-xs text-foreground"><option value="all">All statuses</option><option value="offered">Offered</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="revoked">Revoked</option><option value="accepted">Accepted</option><option value="expired">Expired</option></select></label>} /></CardHeader><CardContent><DataTable rows={rows} columns={columns} pageSize={10} /></CardContent></Card>
 }
 
 function RequestDetail({ lender, request, allRequests, borrowers, credentials, issuers, offers }: { lender: Lender; request?: LenderRequest; allRequests: LenderRequest[]; borrowers: ReturnType<typeof useDemoStore.getState>['borrowers']; credentials: ReturnType<typeof useDemoStore.getState>['credentials']; issuers: ReturnType<typeof useDemoStore.getState>['issuers']; offers: ReturnType<typeof useDemoStore.getState>['offers'] }) {
@@ -105,7 +105,7 @@ function RequestDetail({ lender, request, allRequests, borrowers, credentials, i
   const borrowerId = subjectIdFor(request)
   const borrower = borrowers.find((item) => item.id === borrowerId)
   const checklist = buildVerificationChecklist(request, borrower, credentials, issuers)
-  const rejected = request.status === 'rejected' || checklist.some((check) => !check.passed)
+  const rejected = request.status === 'rejected' || request.status === 'revoked' || checklist.some((check) => !check.passed)
   const offer = request.offerId ? offers.find((item) => item.id === request.offerId) : offers.find((item) => item.lenderId === lender.id)
   const policyRules = request.underwriting.policyChecks.map((rule, index) => ({ id: `${request.id}-policy-${index}`, rule: rule.rule, threshold: rule.threshold, value: rule.value, result: rule.passed ? 'Pass' : 'Fail', passed: rule.passed }))
   const policyColumns = [{ key: 'rule' as const, label: 'Policy rule' }, { key: 'threshold' as const, label: 'Threshold' }, { key: 'value' as const, label: 'Value' }, { key: 'result' as const, label: 'Result', render: (row: (typeof policyRules)[number]) => <StatusBadge status={row.passed ? 'verified' : 'failed'} label={row.result} /> }]
@@ -163,7 +163,7 @@ function TrustedIssuersPage({ issuers }: { issuers: ReturnType<typeof useDemoSto
 function OffersPage({ lender, requests, offers }: { lender: Lender; requests: LenderRequest[]; offers: ReturnType<typeof useDemoStore.getState>['offers'] }) {
   const rows = requests.map((request) => {
     const offer = request.offerId ? offers.find((item) => item.id === request.offerId) : undefined
-    return { id: request.id, borrower: request.borrowerAlias, amount: offer ? formatINR(offer.principal) : request.status === 'rejected' ? '—' : formatINR(lender.policy.minAmount + 10000), rate: offer ? `${offer.rate}%` : `${lender.policy.feePercent + 20}%`, tenure: offer ? `${offer.tenure} months` : '18 months', outcome: requestOutcome(request), requestId: request.id }
+    return { id: request.id, borrower: request.borrowerAlias, amount: offer ? formatINR(offer.principal) : ['rejected', 'revoked'].includes(request.status) ? '—' : formatINR(lender.policy.minAmount + 10000), rate: offer ? `${offer.rate}%` : ['rejected', 'revoked'].includes(request.status) ? '—' : `${lender.policy.feePercent + 20}%`, tenure: offer ? `${offer.tenure} months` : ['rejected', 'revoked'].includes(request.status) ? '—' : '18 months', outcome: requestOutcome(request), requestId: request.id }
   })
   const columns = [{ key: 'borrower' as const, label: 'Borrower' }, { key: 'amount' as const, label: 'Amount' }, { key: 'rate' as const, label: 'Rate' }, { key: 'tenure' as const, label: 'Tenure' }, { key: 'outcome' as const, label: 'Outcome', render: (row: (typeof rows)[number]) => <StatusBadge status={row.outcome} label={row.outcome} /> }, { key: 'requestId' as const, label: 'Request', render: (row: (typeof rows)[number]) => <Link href={`/lender/${lender.id}/requests/${row.requestId}`} className="text-primary hover:underline">Review</Link> }]
   return <Card><CardHeader><SectionHeading title="Offer outcomes" description="A lender view of offers associated with shared requests and their latest lifecycle outcome." /></CardHeader><CardContent><DataTable rows={rows} columns={columns} pageSize={10} /></CardContent></Card>

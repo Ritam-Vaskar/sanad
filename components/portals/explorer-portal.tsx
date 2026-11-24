@@ -96,7 +96,7 @@ export function ExplorerPortal() {
   return <PortalQueryState loading={!hydrated} error={false} retry={() => { setSearch(''); setEventType('all'); setTimeRange('all') }}>
     <div className="grid gap-6">
       <PortalHeading eyebrow="Public trust network" title="SanadTrustRegistry Explorer" description="Inspect public registry events, consent receipts, and status roots on Base Sepolia. Borrower identity and private claims stay off-chain." action={<StatusBadge status="onchain" label="Base Sepolia · testnet" />} />
-      <div className="grid gap-3 rounded-2xl border border-chain/20 bg-chain/[0.045] p-4 sm:grid-cols-[1fr_auto] sm:items-center">
+      <div id="live-feed" className="grid gap-3 rounded-2xl border border-chain/20 bg-chain/[0.045] p-4 sm:grid-cols-[1fr_auto] sm:items-center">
         <div className="flex items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl border border-chain/20 bg-chain/10 text-chain"><ShieldCheck className="size-4" /></span><div><p className="text-xs font-semibold text-chain">No personal data is ever stored on-chain</p><p className="mt-1 text-[11px] leading-5 text-muted-foreground">Only issuer, lender, mandate, status-root and salted commitment identifiers are indexed.</p></div></div>
         <div className="flex flex-wrap items-center gap-2 sm:justify-end"><StatusBadge status={simulateTampering ? 'failed' : 'verified'} label={simulateTampering ? 'Audit chain check failed' : 'Audit chain verified'} /><label className="flex items-center gap-2 rounded-full border border-chain/20 bg-background/70 px-3 py-2 text-[11px] text-chain"><span>Live feed</span><Switch checked={liveFeed} onCheckedChange={setLiveFeed} aria-label="Toggle live chain event feed" /></label></div>
       </div>

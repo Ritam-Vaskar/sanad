@@ -2,6 +2,7 @@ import type { AgentRun, ChainEvent, Credential, Mandate, Offer } from '@/types'
 import { useDemoStore } from '@/lib/store/demo-store'
 import { z } from 'zod'
 import { formatINR } from '@/lib/format'
+import { mandateSigningMessage, offerAcceptanceMessage, verifyWalletMessage } from '@/lib/crypto/wallet'
 
 const delay = () => new Promise<void>((resolve) => setTimeout(resolve, 300 + Math.floor(Math.random() * 601)))
 const makeHash = () => `0x${Math.random().toString(16).slice(2, 18)}…${Math.random().toString(16).slice(2, 6)}`
@@ -44,6 +45,8 @@ export async function issueCredential(type: Credential['type'], subjectId: strin
 // Replaces POST /revoke.
 export async function revokeCredential(id: string) {
   await delay()
+  const credential = useDemoStore.getState().credentials.find((item) => item.id === id)
+  if (!credential || credential.status === 'revoked') throw new Error('This credential is not active and cannot be revoked.')
   useDemoStore.getState().revokeCredential(id)
   return { id, status: 'revoked' as const }
 }
@@ -63,12 +66,21 @@ export async function proposeMandate(text: string) {
 }
 
 // Replaces POST /mandates.
-export async function createMandate(input: Omit<Mandate, 'id' | 'mandateHash' | 'txHash' | 'status'>) {
+export async function createMandate(input: Omit<Mandate, 'id' | 'mandateHash' | 'txHash' | 'status'> & { signature: string }) {
   if (input.maxAmount > 100000 || input.maxAmount <= 0) throw new Error('The requested amount is outside the demo limit.')
+  if (input.maxEmi <= 0 || input.maxEmi > input.maxAmount) throw new Error('The EMI must be positive and no greater than the requested amount.')
   if (input.disclosures.employerName || input.disclosures.rawStatements || input.disclosures.exactIncome) throw new Error('Protected information cannot be included in a permission.')
-  await delay()
-  const mandate: Mandate = { ...input, id: `mandate-${Date.now()}`, status: 'active', mandateHash: makeHash(), txHash: makeHash() }
   const state = useDemoStore.getState()
+  if (!state.walletUnlocked || !state.walletVault || state.walletOwnerId !== input.borrowerId) throw new Error('Unlock the matching borrower wallet before signing a permission.')
+  if (Date.parse(input.expiresAt) <= Date.now()) throw new Error('A permission must expire in the future.')
+  if (!input.allowedLenders.length || input.allowedLenders.length > 2 || input.allowedLenders.some((id) => !state.lenders.some((lender) => lender.id === id && lender.status === 'active'))) {
+    throw new Error('Choose up to two active lenders for this permission.')
+  }
+  const { signature, ...unsignedInput } = input
+  const signatureValid = await verifyWalletMessage(mandateSigningMessage(unsignedInput), signature, state.walletVault.publicKey)
+  if (!signatureValid) throw new Error('The wallet signature could not be verified.')
+  await delay()
+  const mandate: Mandate = { ...unsignedInput, id: `mandate-${Date.now()}`, status: 'active', mandateHash: makeHash(), txHash: makeHash() }
   state.addMandate(mandate)
   state.addActivity({ id: `permission-event-${Date.now()}`, type: 'permission_created', mandateId: mandate.id, timestamp: new Date().toISOString(), description: 'Borrower signed a limited permission' })
   const block = state.admin.chainStatus.blockHeight + 1
@@ -81,6 +93,8 @@ export async function createMandate(input: Omit<Mandate, 'id' | 'mandateHash' | 
 // Replaces POST /mandates/:id/revoke.
 export async function revokeMandate(id: string) {
   const state = useDemoStore.getState()
+  const mandate = state.mandates.find((item) => item.id === id)
+  if (!mandate || mandate.status !== 'active') throw new Error('This permission is no longer active.')
   const activeRuns = state.runs.filter((run) => run.mandateId === id && run.status === 'running')
   state.revokeMandate(id)
   for (const run of activeRuns) {
@@ -102,12 +116,16 @@ export async function startRun(mandateId: string) {
   await delay()
   const state = useDemoStore.getState()
   const mandate = state.mandates.find((item) => item.id === mandateId)
+  if (mandate?.borrowerId !== state.personaId) throw new Error('This permission does not belong to the selected borrower.')
   const templateRun = state.runs.find((item) => item.borrowerId === state.personaId) ?? state.runs[0]
-  if (!mandate || mandate.status !== 'active') throw new Error('An active permission is required to start this search.')
+  if (!mandate || mandate.status !== 'active' || Date.parse(mandate.expiresAt) <= Date.now()) throw new Error('An active, unexpired permission is required to start this search.')
+  if (mandate.allowedLenders.some((lenderId) => !state.lenders.some((lender) => lender.id === lenderId && lender.status === 'active'))) {
+    throw new Error('A lender in this permission is no longer active.')
+  }
   if (!templateRun) throw new Error('A loan search is not available for this borrower.')
   const startedAt = Date.now()
   const startedId = `run-${state.personaId}-${startedAt}`
-  const runTemplate = { ...templateRun, rejection: undefined }
+  const runTemplate = { ...templateRun, borrowerId: state.personaId, rejection: undefined }
   const offerTemplates = state.offers.filter((offer) => offer.runId === templateRun.id)
   const selectedCredentials = state.credentials.filter((credential) => credential.subjectId === state.personaId && ['KycCredential', 'GigIncomeCredential', 'CashFlowCredential'].includes(credential.type))
   const borrower = state.borrowers.find((item) => item.id === state.personaId)
@@ -138,7 +156,7 @@ export async function startRun(mandateId: string) {
           : undefined
   const rejection = firstFailedCheck
     ? { reason: firstFailedCheck.reason, lenderId: mandate.allowedLenders[0] ?? 'lender-a' }
-    : personaRejection ?? (inactiveLenderId ? { reason: 'This lender is no longer active in the trust registry.', lenderId: inactiveLenderId } : undefined)
+    : personaRejection ?? (inactiveLenderId ? { reason: 'This lender is no longer active in the trust registry.', lenderId: inactiveLenderId } : state.personaId !== 'robin-das' ? { reason: 'No eligible offers are available for this synthetic persona.', lenderId: mandate.allowedLenders[0] ?? 'lender-a' } : undefined)
   const newOffers = rejection ? [] : offerTemplates.map((offer): Offer => ({ ...offer, id: `${offer.id}-${startedId}`, runId: startedId, outcome: 'sent' }))
   const started: AgentRun = { ...runTemplate, id: startedId, mandateId, status: 'running', steps: structuredClone(templateRun.steps), rejection }
   const requestTime = new Date().toISOString()
@@ -177,13 +195,24 @@ export async function subscribeRun(runId: string) {
 // Replaces POST /runs/:id/accept.
 export async function acceptOffer(runId: string, offerId: string, signature: string) {
   await delay()
-  if (!signature.trim()) throw new Error('A borrower signature is required to accept an offer.')
-  const offer = useDemoStore.getState().offers.find((item) => item.id === offerId)
-  if (!offer || offer.runId !== runId) throw new Error('Offer does not belong to this run.')
   const state = useDemoStore.getState()
+  const run = state.runs.find((item) => item.id === runId)
+  const offer = state.offers.find((item) => item.id === offerId)
+  if (!run || run.status === 'stopped' || run.status === 'rejected') throw new Error('This run is not eligible for offer acceptance.')
+  if (!offer || offer.runId !== runId) throw new Error('Offer does not belong to this run.')
+  if (!state.walletUnlocked || !state.walletVault || state.walletOwnerId !== run.borrowerId) throw new Error('Unlock the matching borrower wallet before accepting an offer.')
+  if (!await verifyWalletMessage(offerAcceptanceMessage(runId, offer), signature, state.walletVault.publicKey)) {
+    throw new Error('The borrower signature could not be verified.')
+  }
+  if (offer.outcome === 'accepted') throw new Error('This offer has already been accepted.')
   state.acceptOffer(runId, offerId)
-  state.addActivity({ id: `offer-accepted-${Date.now()}`, type: 'offer_accepted', mandateId: state.runs.find((item) => item.id === runId)?.mandateId, lenderId: offer.lenderId, timestamp: new Date().toISOString(), description: 'Borrower accepted the final offer terms' })
-  return { runId, offerId, accepted: true }
+  const timestamp = new Date().toISOString()
+  const block = useDemoStore.getState().admin.chainStatus.blockHeight + 1
+  const txHash = makeHash()
+  state.addActivity({ id: `offer-accepted-${Date.now()}`, type: 'offer_accepted', mandateId: run.mandateId, lenderId: offer.lenderId, requestId: `req-${runId}-${offer.lenderId}`, timestamp, description: 'Borrower accepted the final offer terms', txHash, block })
+  state.addChainEvent({ id: `chain-offer-accepted-${Date.now()}`, type: 'OfferAccepted', txHash, block, timestamp, decoded: { offerId, lenderId: offer.lenderId, runId } })
+  useDemoStore.setState((current) => ({ admin: { ...current.admin, chainStatus: { ...current.admin.chainStatus, blockHeight: block, dailyTransactionsUsed: current.admin.chainStatus.dailyTransactionsUsed + 1 } } }))
+  return { runId, offerId, accepted: true, txHash }
 }
 
 // Replaces GET /activity.
@@ -203,11 +232,10 @@ export async function getLenderRequests(lenderId: string) {
 // Replaces GET /audit/verify.
 export async function verifyAuditChain() {
   await delay()
-  const entries = useDemoStore.getState().auditLog
+  const state = useDemoStore.getState()
+  const entries = state.auditLog.map((entry) => entry.index === state.admin.auditTamperEntry && state.admin.simulateTampering ? { ...entry, prevHash: '0xtampered' } : entry)
   const brokenIndex = entries.findIndex((entry, index) => index > 0 && entry.prevHash !== entries[index - 1]?.hash)
-  const admin = useDemoStore.getState().admin
-  const simulatedTamper = admin.simulateTampering
-  return { valid: brokenIndex === -1 && !simulatedTamper, brokenIndex: simulatedTamper ? admin.auditTamperEntry : brokenIndex, entries: entries.length }
+  return { valid: brokenIndex === -1, brokenIndex: brokenIndex === -1 ? -1 : entries[brokenIndex].index, entries: entries.length }
 }
 
 // Replaces chain RPC or indexer.
@@ -218,8 +246,12 @@ export async function getChainEvents(filter?: { type?: string; limit?: number })
 }
 
 export async function addMockReceipt(input: { mandateId: string; lenderId: string; categories: string[]; requestId: string }) {
+  const initialMandate = useDemoStore.getState().mandates.find((item) => item.id === input.mandateId)
+  if (!initialMandate || initialMandate.status !== 'active') throw new Error('Disclosure was blocked because the mandate is inactive.')
   await delay()
   const state = useDemoStore.getState()
+  const mandate = state.mandates.find((item) => item.id === input.mandateId)
+  if (!mandate || mandate.status !== 'active' || !mandate.allowedLenders.includes(input.lenderId)) throw new Error('Disclosure was blocked because permission changed before receipt creation.')
   const block = state.admin.chainStatus.blockHeight + 1
   const receipt = { id: `receipt-${Date.now()}`, ...input, timestamp: new Date().toISOString(), commitmentHash: makeHash(), txHash: makeHash(), block }
   state.addActivity(receipt)
@@ -263,6 +295,10 @@ export async function getPolicies(lenderId?: string) {
 export async function getAttackScenarios() { await delay(); return useDemoStore.getState().attackScenarios }
 
 // Replaces GET /audit.
-export async function getAuditLog() { await delay(); return useDemoStore.getState().auditLog }
+export async function getAuditLog() {
+  await delay()
+  const state = useDemoStore.getState()
+  return state.auditLog.map((entry) => entry.index === state.admin.auditTamperEntry && state.admin.simulateTampering ? { ...entry, prevHash: '0xtampered' } : entry)
+}
 
 export type { AgentRun, Offer }

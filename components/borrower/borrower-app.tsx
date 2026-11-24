@@ -49,7 +49,7 @@ export function BorrowerApp({ path }: { path: string }) {
   if (path.startsWith('/borrower/mandates/')) return <MandateDetail mandateId={path.slice('/borrower/mandates/'.length)} borrower={borrower} lenders={query.data.lenders} language={language} />
   if (path.startsWith('/borrower/runs/')) return <RunScreen runId={path.slice('/borrower/runs/'.length)} lenders={query.data.lenders} language={language} />
   if (path.startsWith('/borrower/offers/')) return <OffersScreen runId={path.slice('/borrower/offers/'.length)} lenders={query.data.lenders} language={language} />
-  if (path === '/borrower/activity') return <ActivityScreen borrowerId={personaId} language={language} />
+  if (path === '/borrower/activity') return <ActivityScreen borrowerId={personaId} language={language} showTechnical={showTechnical} />
   if (path === '/borrower/profile') return <ProfileScreen borrower={borrower} language={language} showTechnical={showTechnical} />
   return <BorrowerPassport {...shared} mandates={mandates} />
 }

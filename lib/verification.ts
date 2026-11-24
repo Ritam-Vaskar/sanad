@@ -1,6 +1,35 @@
-import type { Borrower, Credential, Issuer, LenderRequest } from '@/types'
+import type { AttackScenario, Borrower, Credential, Issuer, LenderRequest } from '@/types'
 
 export type VerificationCheck = { label: string; passed: boolean; detail: string }
+
+const attackStageIndices: Record<string, number> = {
+  proof_verification: 1,
+  issuer_check: 2,
+  credential_status: 3,
+  request_validation: 6,
+  mandate_check: 7,
+  disclosure_check: 7,
+  run_execution: 8,
+  offer_acceptance: 9,
+}
+
+const attackFailureReasons: Record<string, string> = {
+  signature_invalid: 'The changed claim no longer matches the issuer signature.',
+  issuer_not_in_registry: 'This issuer is not active in the trusted registry.',
+  credential_expired: 'The credential validity window has ended.',
+  nonce_already_used: 'The request nonce was already consumed.',
+  mandate_cap_exceeded: 'The requested amount exceeds the signed mandate cap.',
+  disclosure_not_permitted: 'Employer data is outside the borrower-approved disclosure set.',
+  human_signature_required: 'Offer acceptance requires an explicit borrower signature.',
+  mandate_revoked: 'Revocation invalidates the in-flight mandate before the next disclosure.',
+}
+
+export function evaluateAttackScenario(scenario: AttackScenario) {
+  const failedIndex = attackStageIndices[scenario.stage]
+  const failureReason = attackFailureReasons[scenario.rule]
+  if (failedIndex === undefined || !failureReason) throw new Error(`Attack scenario ${scenario.id} has no verifier rule mapping.`)
+  return { failedIndex, stage: scenario.stage, rule: scenario.rule, failureReason, result: 'Blocked' as const }
+}
 
 export function buildVerificationChecklist(request: LenderRequest, borrower: Borrower | undefined, credentials: Credential[], issuers: Issuer[]): VerificationCheck[] {
   const usedCredentials = request.credentialIds?.length

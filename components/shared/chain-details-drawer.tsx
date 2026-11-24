@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { ExternalLink, ShieldCheck } from 'lucide-react'
+import { Copy, ShieldCheck } from 'lucide-react'
 import { toast } from 'sonner'
 import type { ChainEvent } from '@/types'
 import { CopyButton, StatusBadge } from '@/components/shared/primitives'
@@ -14,6 +14,16 @@ function decodedIdentifiers(event: ChainEvent) {
 
 export function ChainDetailsDrawer() {
   const [event, setEvent] = useState<ChainEvent | null>(null)
+
+  async function copyReceiptHash() {
+    if (!event) return
+    try {
+      await navigator.clipboard.writeText(event.txHash)
+      toast.success('Receipt hash copied.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Could not copy the receipt hash.')
+    }
+  }
 
   useEffect(() => {
     const handleOpen = (customEvent: Event) => setEvent((customEvent as CustomEvent<ChainEvent>).detail)
@@ -39,8 +49,8 @@ export function ChainDetailsDrawer() {
             <h3 id="decoded-fields-title" className="text-xs font-semibold">Decoded fields</h3>
             {decodedIdentifiers(event).length ? decodedIdentifiers(event).map(([key, value]) => <DetailField key={key} label={key} value={String(value)} />) : <p className="rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">No public identifiers were decoded for this record.</p>}
           </section>
-          <Button variant="outline" className="border-chain/25 text-chain hover:bg-chain/10" onClick={() => toast.info('Block explorer navigation is simulated in this prototype.')}>
-            <ExternalLink data-icon="inline-start" />View on block explorer
+          <Button variant="outline" className="border-chain/25 text-chain hover:bg-chain/10" onClick={() => void copyReceiptHash()}>
+            <Copy data-icon="inline-start" />Copy receipt hash
           </Button>
         </div>
       </>}

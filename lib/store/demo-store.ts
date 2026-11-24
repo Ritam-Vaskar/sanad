@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { ActivityEntry, AdminData, AgentRun, AttackScenario, AuditEntry, Borrower, ChainEvent, Credential, DemoSpeed, Issuer, Lender, LenderPolicyDocument, LenderRequest, Mandate, Offer, RunStep, StatusList } from '@/types'
-import { seedData } from './seed-data'
+import type { ActivityEntry, AdminData, AgentRun, AttackScenario, AuditEntry, Borrower, ChainEvent, Credential, DemoSpeed, Issuer, Lender, LenderPolicyDocument, LenderRequest, Mandate, Offer, RunStep, StatusList, WalletVault } from '@/types'
+import { seedData } from '@/lib/api/seed-data'
+import { lockWalletSession } from '@/lib/crypto/wallet'
 
 type ActivityItem = ActivityEntry
 
@@ -9,6 +10,8 @@ type DemoState = {
   hasHydrated: boolean
   walletCreated: boolean
   walletUnlocked: boolean
+  walletVault: WalletVault | null
+  walletOwnerId: string | null
   personaId: string
   speed: DemoSpeed
   showTechnical: boolean
@@ -32,7 +35,7 @@ type DemoState = {
   attackScenarios: AttackScenario[]
   admin: AdminData
   setHasHydrated: (value: boolean) => void
-  createWallet: () => void
+  createWallet: (vault: WalletVault, ownerId: string) => void
   unlockWallet: () => void
   lockWallet: () => void
   setPersona: (id: string) => void
@@ -52,6 +55,7 @@ type DemoState = {
   addChainEvent: (event: ChainEvent) => void
   addLenderRequest: (request: LenderRequest) => void
   updateIssuerStatus: (id: string, status: Issuer['registryStatus']) => void
+  rotateIssuerKey: (id: string) => void
   updateLenderStatus: (id: string, status: Lender['status']) => void
   approveRegistration: (id: string, kind: 'issuer' | 'lender') => void
   rejectRegistration: (id: string, kind: 'issuer' | 'lender', reason: string) => void
@@ -65,6 +69,8 @@ type DemoState = {
 const initialData = () => ({
   walletCreated: false,
   walletUnlocked: false,
+  walletVault: null,
+  walletOwnerId: null,
   personaId: 'robin-das' as const,
   speed: 1 as DemoSpeed,
   showTechnical: false,
@@ -95,10 +101,16 @@ export const useDemoStore = create<DemoState>()(
       hasHydrated: false,
       ...initialData(),
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
-      createWallet: () => set({ walletCreated: true, walletUnlocked: true }),
+      createWallet: (walletVault, walletOwnerId) => set({ walletCreated: true, walletUnlocked: true, walletVault, walletOwnerId }),
       unlockWallet: () => set({ walletUnlocked: true }),
-      lockWallet: () => set({ walletUnlocked: false }),
-      setPersona: (personaId) => set({ personaId }),
+      lockWallet: () => {
+        lockWalletSession()
+        set({ walletUnlocked: false })
+      },
+      setPersona: (personaId) => {
+        lockWalletSession()
+        set({ personaId, walletCreated: false, walletUnlocked: false, walletVault: null, walletOwnerId: null })
+      },
       setSpeed: (speed) => set({ speed }),
       setShowTechnical: (showTechnical) => set({ showTechnical }),
       setLiveFeed: (liveFeed) => set({ liveFeed }),
@@ -135,7 +147,16 @@ export const useDemoStore = create<DemoState>()(
         }
       }),
       addMandate: (mandate) => set((state) => ({ mandates: [mandate, ...state.mandates] })),
-      revokeMandate: (id) => set((state) => ({ mandates: state.mandates.map((item) => item.id === id ? { ...item, status: 'revoked' } : item) })), 
+      revokeMandate: (id) => set((state) => {
+        const relatedRunIds = state.runs.filter((run) => run.mandateId === id).map((run) => run.id)
+        const relatedOfferIds = new Set(state.offers.filter((offer) => relatedRunIds.includes(offer.runId)).map((offer) => offer.id))
+        return {
+          mandates: state.mandates.map((item) => item.id === id ? { ...item, status: 'revoked' } : item),
+          lenderRequests: state.lenderRequests.map((request) => (relatedRunIds.some((runId) => request.id.startsWith(`req-${runId}-`)) || (request.offerId ? relatedOfferIds.has(request.offerId) : false)) && !['accepted', 'rejected', 'expired'].includes(request.status)
+            ? { ...request, status: 'revoked', result: 'Mandate revoked; no further disclosures are permitted.' }
+            : request),
+        }
+      }),
       addActivity: (item) => set((state) => ({ activity: [item, ...state.activity] })),
       addChainEvent: (event) => set((state) => ({ chainEvents: [event, ...state.chainEvents] })),
       addLenderRequest: (request) => set((state) => ({ lenderRequests: [request, ...state.lenderRequests] })),
@@ -149,6 +170,19 @@ export const useDemoStore = create<DemoState>()(
           issuers: state.issuers.map((item) => item.id === id ? { ...item, registryStatus: status } : item),
           admin: { ...state.admin, governanceLog: [{ id: `gov-${Date.now()}`, action: `Issuer ${status === 'active' ? 'activated' : 'deactivated'}: ${issuer.name}`, actor: 'Trust Admin', timestamp }, ...state.admin.governanceLog], chainStatus: { ...state.admin.chainStatus, blockHeight: block, dailyTransactionsUsed: state.admin.chainStatus.dailyTransactionsUsed + 1 } },
           chainEvents: [{ id: `chain-registry-${Date.now()}`, type: status === 'active' ? 'IssuerActivated' : 'IssuerDeactivated', txHash, block, timestamp, decoded: { issuerId: id, registryStatus: status } }, ...state.chainEvents],
+        }
+      }),
+      rotateIssuerKey: (id) => set((state) => {
+        const issuer = state.issuers.find((item) => item.id === id)
+        if (!issuer) return {}
+        const timestamp = new Date().toISOString()
+        const txHash = `0x${Math.random().toString(16).slice(2, 12)}…${Date.now().toString(16).slice(-4)}`
+        const block = state.admin.chainStatus.blockHeight + 1
+        const keyHash = `0x${Math.random().toString(16).slice(2, 14)}…${Date.now().toString(16).slice(-4)}`
+        return {
+          issuers: state.issuers.map((item) => item.id === id ? { ...item, keyHash } : item),
+          admin: { ...state.admin, governanceLog: [{ id: `gov-${Date.now()}`, action: `Issuer signing key rotated: ${issuer.name}`, actor: 'Trust Admin', timestamp }, ...state.admin.governanceLog], chainStatus: { ...state.admin.chainStatus, blockHeight: block, dailyTransactionsUsed: state.admin.chainStatus.dailyTransactionsUsed + 1 } },
+          chainEvents: [{ id: `chain-key-rotated-${Date.now()}`, type: 'IssuerKeyRotated', txHash, block, timestamp, decoded: { issuerId: id, keyHash } }, ...state.chainEvents],
         }
       }),
       updateLenderStatus: (id, status) => set((state) => {
@@ -195,16 +229,20 @@ export const useDemoStore = create<DemoState>()(
       updateLenderSettings: (lenderId, values) => set((state) => ({ lenders: state.lenders.map((item) => item.id === lenderId ? { ...item, ...values } : item) })),
       setOfferOutcome: (offerId, outcome) => set((state) => ({ offers: state.offers.map((offer) => offer.id === offerId ? { ...offer, outcome } : offer) })),
       acceptOffer: (runId, offerId) => set((state) => ({
-        offers: state.offers.map((offer) => offer.id === offerId ? { ...offer, accepted: true } as Offer : offer),
+        offers: state.offers.map((offer) => offer.id === offerId ? { ...offer, outcome: 'accepted' } as Offer : offer),
         runs: state.runs.map((run) => run.id === runId ? { ...run, status: 'accepted' } : run),
+        lenderRequests: state.lenderRequests.map((request) => request.offerId === offerId ? { ...request, status: 'accepted' } : request),
       })),
-      resetDemo: () => set({ hasHydrated: true, ...initialData() }),
+      resetDemo: () => {
+        lockWalletSession()
+        set({ hasHydrated: true, ...initialData() })
+      },
     }),
     {
       name: 'sanad-demo-v1',
       storage: createJSONStorage(() => localStorage),
       skipHydration: true,
-      partialize: (state) => ({ ...state, hasHydrated: false }),
+      partialize: (state) => ({ ...state, hasHydrated: false, walletUnlocked: false }),
       onRehydrateStorage: () => (state) => state?.setHasHydrated(true),
     },
   ),

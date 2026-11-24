@@ -7,6 +7,8 @@ import { AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, 
 import { toast } from 'sonner'
 import type { Borrower, Lender, Offer, RunStep } from '@/types'
 import { acceptOffer as acceptOfferApi, addMockReceipt, revokeMandate as revokeMandateApi, startRun } from '@/lib/api/mock-api'
+import { offerAcceptanceMessage, signWalletMessage, unlockWalletVault } from '@/lib/crypto/wallet'
+import { downloadJsonFile } from '@/lib/download'
 import { buildAmortizationSchedule } from '@/lib/emi'
 import { formatDate, formatINR } from '@/lib/format'
 import { simulateRun } from '@/lib/sim/runSimulator'
@@ -54,7 +56,7 @@ export function RunScreen({ runId, lenders, language }: { runId: string; lenders
   const mandate = useDemoStore((state) => state.mandates.find((item) => item.id === run?.mandateId))
   const cancelSimulation = useRef<(() => void) | null>(null)
   const [busy, setBusy] = useState(false)
-  const activeLenders = lenders.filter((item) => item.status === 'active').slice(0, 2)
+  const activeLenders = lenders.filter((item) => item.status === 'active' && mandate?.allowedLenders.includes(item.id))
   const appendRunEvent = useDemoStore((state) => state.appendRunEvent)
   const setRunStatus = useDemoStore((state) => state.setRunStatus)
 
@@ -71,12 +73,15 @@ export function RunScreen({ runId, lenders, language }: { runId: string; lenders
     if (existingEvents.length > 0 && runStatus !== 'running' && runStatus !== 'rejected') return
     const cancel = simulateRun(runId, (step) => {
       const current = useDemoStore.getState()
-      const alreadySeen = (current.runEvents[runId] ?? []).some((event) => event.title === step.title)
+      const alreadySeen = (current.runEvents[runId] ?? []).some((event) => event.title === step.title && event.type === step.type && event.lenderId === step.lenderId)
       if (!alreadySeen) current.appendRunEvent(runId, step)
       const activeMandate = current.mandates.find((item) => item.id === currentRun.mandateId)
       if (!alreadySeen && step.type === 'proof' && step.lenderId && activeMandate) {
         const categories = (step.claims ?? []).map((claim) => claim.toLowerCase().includes('kyc') ? 'kycStatus' : claim.toLowerCase().includes('income') ? 'incomeThreshold' : claim.toLowerCase().includes('cashflow') ? 'cashflowStability' : 'ageOver21')
-        void addMockReceipt({ mandateId: activeMandate.id, lenderId: step.lenderId, categories, requestId: `req-${runId}-${step.lenderId}` })
+        void addMockReceipt({ mandateId: activeMandate.id, lenderId: step.lenderId, categories, requestId: `req-${runId}-${step.lenderId}` }).catch((error: unknown) => {
+          const currentMandate = useDemoStore.getState().mandates.find((item) => item.id === activeMandate.id)
+          if (currentMandate?.status === 'active') toast.error(error instanceof Error ? error.message : 'Could not record the disclosure receipt.')
+        })
       }
     }, () => useDemoStore.getState().setRunStatus(runId, currentRun.rejection ? 'rejected' : 'ready_for_decision'))
     cancelSimulation.current = cancel
@@ -92,12 +97,17 @@ export function RunScreen({ runId, lenders, language }: { runId: string; lenders
     cancelSimulation.current?.()
     cancelSimulation.current = null
     const blocked: RunStep = { offsetSeconds: 0, type: 'blocked', title: 'Blocked: permission revoked', detail: 'The agent stopped. Starting again needs a new permission.', decision: 'deny', pepRule: 'mandate_revoked' }
-    if (mandate?.status === 'active') await revokeMandateApi(mandate.id)
     const latestEvents = useDemoStore.getState().runEvents[runId] ?? []
     if (!latestEvents.some((event) => event.title === blocked.title)) appendRunEvent(runId, blocked)
     setRunStatus(runId, 'stopped')
-    toast.success('The agent has stopped. A new permission is needed to continue.')
-    setBusy(false)
+    try {
+      if (mandate?.status === 'active') await revokeMandateApi(mandate.id)
+      toast.success('The agent has stopped. A new permission is needed to continue.')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'The agent stopped, but mandate revocation failed.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   const startAgain = async () => {
@@ -130,23 +140,28 @@ export function OffersScreen({ runId, lenders, language }: { runId: string; lend
   const router = useRouter()
   const run = useDemoStore((state) => state.runs.find((item) => item.id === runId))
   const allOffers = useDemoStore((state) => state.offers)
+  const activity = useDemoStore((state) => state.activity)
+  const walletVault = useDemoStore((state) => state.walletVault)
+  const markWalletUnlocked = useDemoStore((state) => state.unlockWallet)
   const offers = allOffers.filter((offer) => offer.runId === runId).sort((a, b) => a.totalCost - b.totalCost)
+  const accepted = offers.find((offer) => offer.outcome === 'accepted') ?? null
+  const acceptedTxHash = activity.find((item) => item.type === 'offer_accepted' && item.requestId === `req-${runId}-${accepted?.lenderId}`)?.txHash ?? ''
   const [sheet, setSheet] = useState<OfferSheetState>(null)
   const [selected, setSelected] = useState<Offer | null>(null)
   const [understood, setUnderstood] = useState(false)
   const [passphrase, setPassphrase] = useState('')
   const [signing, setSigning] = useState(false)
-  const [accepted, setAccepted] = useState<Offer | null>(null)
   const [declined, setDeclined] = useState(false)
   const schedule = selected ? buildAmortizationSchedule(selected.principal, selected.rate, selected.tenure) : []
 
   async function signAcceptance() {
-    if (!selected || !run || !understood || passphrase.trim().length < 6 || signing) return
+    if (!selected || !run || !walletVault || !understood || passphrase.trim().length < 6 || signing) return
     setSigning(true)
-    await new Promise((resolve) => window.setTimeout(resolve, 700))
     try {
-      await acceptOfferApi(runId, selected.id, passphrase)
-      setAccepted(selected)
+      await unlockWalletVault(passphrase, walletVault)
+      markWalletUnlocked()
+      const signature = await signWalletMessage(offerAcceptanceMessage(runId, selected))
+      await acceptOfferApi(runId, selected.id, signature)
       setSheet(null)
       toast.success('Your acceptance has been recorded.')
     } catch (error) {
@@ -157,9 +172,9 @@ export function OffersScreen({ runId, lenders, language }: { runId: string; lend
   }
 
   if (!run) return <BorrowerEmpty title="Offers are not available" description="This loan search could not be found." action={<Button nativeButton={false} role="link" render={<Link href="/borrower/assistant" />} size="sm">Start a new search</Button>} />
-  if (accepted) return <div className="grid gap-4"><div className="grid size-14 place-items-center rounded-full bg-success/10 text-success"><CheckCircle2 /></div><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-success">Offer accepted</p><h1 className="mt-1 text-xl font-semibold">Your loan summary is ready</h1><p className="mt-1 text-xs leading-5 text-muted-foreground">Review the final terms before continuing with the lender.</p></div><Card className="border-success/20 bg-success/[0.04]"><CardHeader><CardTitle className="text-sm">{lenders.find((item) => item.id === accepted.lenderId)?.name ?? 'Lender'}</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-xs"><Term label="Loan amount" value={formatINR(accepted.principal)} /><Term label="Monthly EMI" value={formatINR(accepted.emi, { decimals: 2 })} /><Term label="Tenure" value={`${accepted.tenure} months`} /><Term label="Total cost" value={formatINR(accepted.totalCost, { decimals: 2 })} /></CardContent></Card><BorrowerTxChip value={accepted.offerHash} /><Button variant="outline" onClick={() => toast.success('Sanction summary prepared for download.')}>Download sanction summary<Download data-icon="inline-end" /></Button><Button onClick={() => router.push('/borrower/activity')}>See who received your proofs<ArrowRight data-icon="inline-end" /></Button></div>
+  if (accepted) return <div className="grid gap-4"><div className="grid size-14 place-items-center rounded-full bg-success/10 text-success"><CheckCircle2 /></div><div><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-success">Offer accepted</p><h1 className="mt-1 text-xl font-semibold">Your loan summary is ready</h1><p className="mt-1 text-xs leading-5 text-muted-foreground">Review the final terms before continuing with the lender.</p></div><Card className="border-success/20 bg-success/[0.04]"><CardHeader><CardTitle className="text-sm">{lenders.find((item) => item.id === accepted.lenderId)?.name ?? 'Lender'}</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-xs"><Term label="Loan amount" value={formatINR(accepted.principal)} /><Term label="Monthly EMI" value={formatINR(accepted.emi, { decimals: 2 })} /><Term label="Tenure" value={`${accepted.tenure} months`} /><Term label="Total cost" value={formatINR(accepted.totalCost, { decimals: 2 })} /></CardContent></Card><BorrowerTxChip value={acceptedTxHash || accepted.offerHash} /><Button variant="outline" onClick={() => downloadJsonFile('sanad-sanction-summary.json', { lender: lenders.find((item) => item.id === accepted.lenderId)?.name ?? 'Lender', offer: accepted, transaction: acceptedTxHash })}>Download sanction summary<Download data-icon="inline-end" /></Button><Button onClick={() => router.push('/borrower/activity')}>See who received your proofs<ArrowRight data-icon="inline-end" /></Button></div>
 
-  if (declined || run.status === 'rejected' || offers.length === 0) return <div className="grid gap-4"><SectionHeading eyebrow="Loan search result" title="No offers this time" description="Your proof details were not changed by this decision." /><Card className="border-warning/25 bg-warning/[0.04]"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="text-warning" />{run.borrowerId === 'priya-nair' ? 'Verified income proof is not available yet.' : run.borrowerId === 'imran-sheikh' ? 'Identity proof expired.' : run.rejection?.reason ?? 'No lender could offer terms within this permission.'}</CardTitle></CardHeader><CardContent><p className="text-xs leading-5 text-muted-foreground">{run.borrowerId === 'priya-nair' ? 'Ask your earning platform about a verified income proof after your income reaches the issuer threshold.' : run.borrowerId === 'imran-sheikh' ? 'Renew your expired identity proof, then create a new permission.' : 'Check with the provider about the risk result. Your bank statements were not shared.'}</p></CardContent></Card><Button nativeButton={false} role="link" render={<Link href="/borrower/assistant" />} variant="outline">Ask what you can do<ArrowRight data-icon="inline-end" /></Button></div>
+  if (declined || run.status === 'rejected' || run.status === 'stopped' || offers.length === 0) return <div className="grid gap-4"><SectionHeading eyebrow="Loan search result" title="No offers this time" description="Your proof details were not changed by this decision." /><Card className="border-warning/25 bg-warning/[0.04]"><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><AlertTriangle className="text-warning" />{run.status === 'stopped' ? 'This search is stopped.' : run.borrowerId === 'priya-nair' ? 'Verified income proof is not available yet.' : run.borrowerId === 'imran-sheikh' ? 'Identity proof expired.' : run.rejection?.reason ?? 'No lender could offer terms within this permission.'}</CardTitle></CardHeader><CardContent><p className="text-xs leading-5 text-muted-foreground">{run.status === 'stopped' ? 'No further proofs are sent from this run. Review your permission before starting another search.' : run.borrowerId === 'priya-nair' ? 'Ask your earning platform about a verified income proof after your income reaches the issuer threshold.' : run.borrowerId === 'imran-sheikh' ? 'Renew your expired identity proof, then create a new permission.' : 'Check with the provider about the risk result. Your bank statements were not shared.'}</p></CardContent></Card><Button nativeButton={false} role="link" render={<Link href="/borrower/assistant" />} variant="outline">Ask what you can do<ArrowRight data-icon="inline-end" /></Button></div>
 
   const bestOffer = offers[0]
   return <div className="grid gap-4 pb-2"><SectionHeading eyebrow="Offer comparison" title={t(language, 'Your best offers')} description="Ranked by total cost: interest plus all lender fees." /><div className="grid gap-3">{offers.map((offer, index) => { const lender = lenders.find((item) => item.id === offer.lenderId); return <Card key={offer.id} className={index === 0 ? 'border-primary/35 bg-gradient-to-br from-primary/[0.07] to-card' : ''}><CardHeader className="flex-row items-start justify-between gap-2"><div><CardTitle className="text-sm">{lender?.name ?? 'Verified lender'}</CardTitle><p className="mt-1 text-[10px] text-muted-foreground">{offer.rate}% annual rate · {offer.tenure} months</p></div>{index === 0 && <Badge className="rounded-full bg-primary/15 text-[9px] text-primary">{t(language, 'Lowest total cost')}</Badge>}</CardHeader><CardContent className="grid grid-cols-2 gap-3"><Term label="Loan amount" value={formatINR(offer.principal)} /><Term label={t(language, 'Monthly EMI')} value={formatINR(offer.emi, { decimals: 2 })} /><Term label="Processing fee + tax" value={formatINR(offer.processingFee + offer.gst, { decimals: 2 })} /><Term label="Total cost" value={formatINR(offer.totalCost, { decimals: 2 })} /><div className="col-span-2 flex items-center gap-1.5 rounded-lg bg-success/[0.06] p-2 text-[10px] text-success"><Check />{t(language, 'Fits your EMI limit')}</div></CardContent><CardFooter className="grid grid-cols-2 gap-2 border-t border-border/70 pt-3"><Button size="sm" variant="outline" onClick={() => { setSelected(offer); setSheet('schedule') }}>Repayment schedule</Button><Button size="sm" onClick={() => { setSelected(offer); setSheet('accept') }}>{t(language, 'Accept this offer')}</Button></CardFooter></Card> })}</div><Card><CardHeader><CardTitle className="flex items-center gap-2 text-sm"><Table2 className="text-primary" />Compare the terms</CardTitle></CardHeader><CardContent className="overflow-x-auto"><Table><TableHeader><TableRow><TableHead>Term</TableHead>{offers.map((offer) => <TableHead key={offer.id} className="min-w-28">{lenders.find((item) => item.id === offer.lenderId)?.name ?? 'Lender'}</TableHead>)}</TableRow></TableHeader><TableBody>{[['Amount', (offer: Offer) => formatINR(offer.principal)], ['Interest rate', (offer: Offer) => `${offer.rate}%`], ['Tenure', (offer: Offer) => `${offer.tenure} months`], ['Monthly EMI', (offer: Offer) => formatINR(offer.emi, { decimals: 2 })], ['Fees incl. GST', (offer: Offer) => formatINR(offer.processingFee + offer.gst, { decimals: 2 })], ['Total interest', (offer: Offer) => formatINR(offer.totalInterest, { decimals: 2 })], ['Total repayment', (offer: Offer) => formatINR(offer.totalRepayment, { decimals: 2 })], ['Total cost', (offer: Offer) => formatINR(offer.totalCost, { decimals: 2 })], ['Fits EMI limit', (offer: Offer) => offer.fitsEmiLimit ? 'Yes' : 'No']].map(([label, value]) => <TableRow key={String(label)}><TableHead className="text-[10px] font-medium">{String(label)}</TableHead>{offers.map((offer) => <TableCell key={offer.id} className="text-[10px]">{(value as (offer: Offer) => string)(offer)}</TableCell>)}</TableRow>)}</TableBody></Table></CardContent></Card><Card className="border-chain/20 bg-chain/[0.035]"><CardHeader><CardTitle className="text-sm">{t(language, 'About these numbers')}</CardTitle></CardHeader><CardContent className="grid gap-2"><p className="text-xs leading-5 text-muted-foreground">{run.assistantExplanation}</p><p className="text-[10px] leading-5 text-foreground">Numbers come from the lenders calculation engines, not from AI.</p></CardContent></Card><ConfirmDialog title="Decline all offers?" description="This will close the current offer choices. You can start a new search with a fresh permission later." confirmLabel="Decline all" trigger={<Button variant="ghost" className="w-full text-muted-foreground">{t(language, 'Decline all')}</Button>} onConfirm={() => { setDeclined(true); toast.success('All offers declined.') }} /><Sheet open={sheet !== null} onOpenChange={(open) => { if (!open) setSheet(null) }}><SheetContent side="bottom" className="max-h-[88vh] overflow-y-auto rounded-t-3xl border-border bg-surface"><SheetHeader><SheetTitle>{sheet === 'schedule' ? 'Repayment schedule' : 'Accept this offer'}</SheetTitle><SheetDescription>{selected ? `${lenders.find((item) => item.id === selected.lenderId)?.name ?? 'Lender'} · ${formatINR(selected.principal)} · ${selected.tenure} months` : 'Review the final terms.'}</SheetDescription></SheetHeader>{sheet === 'schedule' && selected && <div className="mx-auto grid w-full max-w-md gap-3 p-4"><p className="text-[10px] leading-5 text-muted-foreground">This is an estimate based on the lender&apos;s rate and tenure. Final figures come from the lender.</p><div className="overflow-x-auto rounded-xl border border-border"><Table><TableHeader><TableRow><TableHead>Month</TableHead><TableHead>Principal</TableHead><TableHead>Interest</TableHead><TableHead>Payment</TableHead><TableHead>Balance</TableHead></TableRow></TableHeader><TableBody>{schedule.map((row) => <TableRow key={row.month}><TableCell>{row.month}</TableCell><TableCell>{formatINR(row.principal, { decimals: 0 })}</TableCell><TableCell>{formatINR(row.interest, { decimals: 0 })}</TableCell><TableCell>{formatINR(row.payment, { decimals: 0 })}</TableCell><TableCell>{formatINR(row.closingBalance, { decimals: 0 })}</TableCell></TableRow>)}</TableBody></Table></div></div>}{sheet === 'accept' && selected && <div className="mx-auto grid w-full max-w-md gap-3 p-4"><Card><CardHeader><CardTitle className="text-sm">Final terms</CardTitle></CardHeader><CardContent className="grid grid-cols-2 gap-3 text-xs"><Term label="Amount" value={formatINR(selected.principal)} /><Term label="Rate" value={`${selected.rate}%`} /><Term label="Monthly EMI" value={formatINR(selected.emi, { decimals: 2 })} /><Term label="Tenure" value={`${selected.tenure} months`} /><Term label="Fees incl. GST" value={formatINR(selected.processingFee + selected.gst, { decimals: 2 })} /><Term label="Total repayment" value={formatINR(selected.totalRepayment, { decimals: 2 })} /></CardContent></Card><label className="flex items-start gap-2 rounded-xl border border-border p-3 text-[11px] leading-5"><Checkbox checked={understood} onCheckedChange={(checked) => setUnderstood(checked === true)} aria-label="I understand the final loan terms" /><span>I understand the final loan terms and the repayment obligation.</span></label><label htmlFor="offer-passphrase" className="text-xs font-medium">Passphrase</label><Input id="offer-passphrase" type="password" value={passphrase} onChange={(event) => setPassphrase(event.target.value)} autoComplete="current-password" placeholder="At least 6 characters" /><Button onClick={signAcceptance} disabled={!understood || passphrase.trim().length < 6 || signing}>{signing ? <><Pause data-icon="inline-start" />Signing…</> : <>Sign to accept<ArrowRight data-icon="inline-end" /></>}</Button></div>}</SheetContent></Sheet><div className="sr-only">Best offer: {bestOffer ? lenders.find((item) => item.id === bestOffer.lenderId)?.name : 'none'}</div></div>
