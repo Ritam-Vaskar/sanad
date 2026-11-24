@@ -1,0 +1,24 @@
+export type CredentialStatus = 'active' | 'revoked' | 'expired'
+export type RegistryStatus = 'active' | 'pending' | 'suspended'
+export type Claim = { key: string; label: string; value: string | number | boolean; disclosable: boolean; sharedByDefault: boolean; sensitive: boolean }
+export type Borrower = { id: string; name: string; age: number; city: string; did: string; ethAddress: string; occupation: string; monthlyIncome: number; monthlyObligations?: number; kycStatus: string; notes: string; riskFlag?: boolean }
+export type Credential = { id: string; subjectId: string; type: 'KycCredential' | 'GigIncomeCredential' | 'CashFlowCredential'; issuerId: string; status: CredentialStatus; issuedAt: string; validUntil: string; statusListIndex: number; claims: Claim[] }
+export type Issuer = { id: string; name: string; did: string; keyHash: string; registryStatus: RegistryStatus; schemas: string[]; statusListSize: number; issuedCount: number; revokedCount: number; address: string }
+export type LenderPolicy = { minAmount: number; maxAmount: number; minTenure: number; maxTenure: number; foirLimit: number; minIncome: number; feePercent: number }
+export type Lender = { id: string; name: string; did: string; address: string; status: RegistryStatus; summary: string; policy: LenderPolicy; apiKeyMasked: string; webhookUrl?: string; notifications?: { email: boolean; webhook: boolean } }
+export type Mandate = { id: string; borrowerId: string; purpose: string; maxAmount: number; maxEmi: number; allowedLenders: string[]; disclosures: Record<string, boolean>; allowAccept: boolean; expiresAt: string; status: 'active' | 'expired' | 'revoked'; mandateHash: string; txHash: string }
+export type OfferOutcome = 'sent' | 'viewed' | 'accepted' | 'expired' | 'declined'
+export type Offer = { id: string; runId: string; lenderId: string; principal: number; rate: number; tenure: number; emi: number; processingFee: number; gst: number; totalInterest: number; totalRepayment: number; totalCost: number; fitsEmiLimit: boolean; offerHash: string; assistantExplanation: string; outcome?: OfferOutcome }
+export type RunStep = { offsetSeconds: number; type: string; lenderId?: string; title: string; detail: string; pepRule?: string; decision?: string; claims?: string[] }
+export type AgentRun = { id: string; borrowerId: string; mandateId: string; status: string; assistantExplanation: string; steps: RunStep[]; rejection?: { reason: string; lenderId: string } }
+export type ConsentReceipt = { id: string; mandateId: string; lenderId: string; categories: string[]; requestId: string; timestamp: string; commitmentHash: string; txHash: string; block: number }
+export type ChainEvent = { id: string; type: string; txHash: string; block: number; timestamp: string; decoded: Record<string, string | number | boolean> }
+export type LenderRequest = { id: string; lenderId: string; borrowerAlias: string; receivedAt: string; status: string; checks: { name: string; passed: boolean; reason: string }[]; disclosedClaims: string[]; withheldClaims: string[]; underwriting: { foir: number; riskScore: number; riskSegment: string; riskBreakdown: { label: string; score: number }[]; policyChecks: { rule: string; threshold: string; value: string; passed: boolean }[] }; offerId?: string; subjectId?: string; credentialIds?: string[]; auditHash?: string; result?: string }
+export type DemoSpeed = 1 | 2 | 4
+
+export type ActivityEntry = { id: string; timestamp: string; type?: string; mandateId?: string; lenderId?: string; categories?: string[]; requestId?: string; commitmentHash?: string; txHash?: string; block?: number; credentialId?: string; description?: string }
+export type StatusList = { issuerId: string; listId: string; bitLength: number; bits: number[]; revokedIndices: number[]; listHash: string; lastOnChainRootTx: string }
+export type AuditEntry = { index: number; prevHash: string; hash: string; actor: string; action: string; decision: string; rule: string; timestamp: string }
+export type AttackScenario = { id: string; title: string; description: string; whyItMatters: string; stage: string; rule: string }
+export type LenderPolicyDocument = { id: string; lenderId: string; version: number; revisionLabel?: string; effectiveAt: string; eligibility: string[]; amountRange: number[]; tenureMonths: number[]; foirLimit: number; rateByRisk: Record<'LOW' | 'MEDIUM' | 'HIGH', number | null>; feePercent: number; gstPercent: number; allowedEmployment: string[] }
+export type AdminData = { schemaVersions: { name: string; version: string; status: string }[]; governanceLog: { id: string; action: string; actor: string; timestamp: string }[]; chainStatus: { network: string; blockHeight: number; relayerBalance: number; dailyTransactionCap: number; dailyTransactionsUsed: number }; queue: { issuers: string[]; lenders: string[] }; auditTamperEntry: number; simulateTampering: boolean }

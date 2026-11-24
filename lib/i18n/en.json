@@ -1,0 +1,7 @@
+{
+  "nav": { "passport": "Passport", "onboarding": "Onboarding", "credentials": "Credentials", "addCredential": "Add credential", "assistant": "Assistant", "mandate": "Mandate", "runHistory": "Run history", "offers": "Offers", "activity": "Activity", "profile": "Profile" },
+  "buttons": { "continue": "Continue", "share": "Share proof", "sign": "Sign mandate", "revoke": "Revoke access", "accept": "Accept offer" },
+  "permission": { "allowed": "Allowed by your mandate", "locked": "Not shared", "humanOnly": "Only you can accept a loan" },
+  "offers": { "emi": "Monthly EMI", "totalCost": "Total cost", "lowestCost": "Lowest total cost", "compare": "Compare offers" },
+  "activity": { "receipt": "Consent receipt", "onChain": "Recorded on-chain", "credential": "Credential update" }
+}

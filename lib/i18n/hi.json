@@ -1,0 +1,7 @@
+{
+  "nav": { "passport": "पासपोर्ट", "onboarding": "शुरुआत", "credentials": "प्रमाण", "addCredential": "प्रमाण जोड़ें", "assistant": "सहायक", "mandate": "अनुमति", "runHistory": "एजेंट गतिविधि", "offers": "ऑफ़र", "activity": "गतिविधि", "profile": "प्रोफ़ाइल" },
+  "buttons": { "continue": "जारी रखें", "share": "प्रमाण साझा करें", "sign": "अनुमति पर हस्ताक्षर करें", "revoke": "पहुँच रद्द करें", "accept": "ऑफ़र स्वीकार करें" },
+  "permission": { "allowed": "आपकी अनुमति से स्वीकृत", "locked": "साझा नहीं किया गया", "humanOnly": "ऋण केवल आप स्वीकार कर सकते हैं" },
+  "offers": { "emi": "मासिक किस्त", "totalCost": "कुल लागत", "lowestCost": "सबसे कम कुल लागत", "compare": "ऑफ़र की तुलना करें" },
+  "activity": { "receipt": "सहमति रसीद", "onChain": "ब्लॉकचेन पर दर्ज", "credential": "प्रमाण अपडेट" }
+}

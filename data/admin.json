@@ -1,0 +1,8 @@
+{
+  "schemaVersions": [{ "name": "KycCredential", "version": "1.2", "status": "active" }, { "name": "GigIncomeCredential", "version": "1.0", "status": "active" }, { "name": "CashFlowCredential", "version": "1.1", "status": "active" }, { "name": "KycCredential", "version": "1.3", "status": "active" }, { "name": "GigIncomeCredential", "version": "1.1", "status": "active" }, { "name": "CashFlowCredential", "version": "1.2", "status": "active" }, { "name": "VehicleRepairPurposeCredential", "version": "1.0", "status": "active" }, { "name": "EmploymentTenureCredential", "version": "1.0", "status": "active" }, { "name": "SmallBusinessCredential", "version": "1.0", "status": "active" }, { "name": "IdentityAssuranceCredential", "version": "1.0", "status": "active" }],
+  "governanceLog": [{ "id": "gov-01", "action": "Lender policy reviewed", "actor": "Trust Admin", "timestamp": "2026-11-23T12:30:00.000Z" }, { "id": "gov-02", "action": "Status list root anchored", "actor": "Relayer", "timestamp": "2026-11-22T09:10:00.000Z" }],
+  "chainStatus": { "network": "Base Sepolia (testnet)", "blockHeight": 19845024, "relayerBalance": 0.842, "dailyTransactionCap": 200, "dailyTransactionsUsed": 12 },
+  "queue": { "issuers": ["issuer-pending-1", "issuer-pending-2"], "lenders": ["lender-pending", "lender-c", "lender-d", "lender-e", "lender-f", "lender-g", "lender-h", "lender-i"] },
+  "auditTamperEntry": 7,
+  "simulateTampering": false
+}
