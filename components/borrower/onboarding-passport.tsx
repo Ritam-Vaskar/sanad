@@ -6,8 +6,8 @@ import { useState } from 'react'
 import { ArrowRight, KeyRound, LockKeyhole, Plus, ShieldCheck, Sparkles } from 'lucide-react'
 import type { Borrower, Credential, Issuer, Mandate } from '@/types'
 import { issueCredential, revokeCredential } from '@/lib/api'
-import { createWalletVault, unlockWalletVault } from '@/lib/crypto/wallet'
 import { useDemoStore } from '@/lib/store/demo-store'
+import { useWallet } from '@/lib/wallet'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -18,11 +18,8 @@ import { t, type BorrowerLanguage } from './copy'
 
 export function OnboardingFlow() {
   const router = useRouter()
+  const wallet = useWallet()
   const created = useDemoStore((state) => state.walletCreated)
-  const createWallet = useDemoStore((state) => state.createWallet)
-  const unlockWallet = useDemoStore((state) => state.unlockWallet)
-  const walletVault = useDemoStore((state) => state.walletVault)
-  const personaId = useDemoStore((state) => state.personaId)
   const language = useDemoStore((state) => state.language)
   const [step, setStep] = useState(0)
   const [justCreated, setJustCreated] = useState(false)
@@ -41,8 +38,7 @@ export function OnboardingFlow() {
     setWalletBusy(true)
     setWalletError('')
     try {
-      const vault = await createWalletVault(passphrase)
-      createWallet(vault, personaId)
+      await wallet.createWallet(passphrase)
       setJustCreated(true)
       setStep(2)
     } catch (error) {
@@ -53,12 +49,11 @@ export function OnboardingFlow() {
   }
 
   async function unlockSanadId() {
-    if (!walletVault || walletBusy) return
+    if (walletBusy) return
     setWalletBusy(true)
     setWalletError('')
     try {
-      await unlockWalletVault(passphrase, walletVault)
-      unlockWallet()
+      await wallet.unlock(passphrase)
       router.push('/borrower')
     } catch (error) {
       setWalletError(error instanceof Error ? error.message : 'Could not unlock this wallet.')

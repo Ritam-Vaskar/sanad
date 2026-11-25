@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, BadgeCheck, CalendarClock, FileCheck2, Landmark, Network, Search, ShieldCheck, ShieldX } from 'lucide-react'
-import type { ChainEvent } from '@/types'
+import type { ChainEvent, Issuer, Lender } from '@/types'
+import { useChain } from '@/lib/chain'
 import { openChainDetail } from '@/lib/chain-details'
 import { useDemoStore } from '@/lib/store/demo-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,10 +36,14 @@ function formatTimestamp(value: string) {
 }
 
 export function ExplorerPortal() {
+  const chain = useChain()
   const hydrated = useDemoStore((state) => state.hasHydrated)
-  const events = useDemoStore((state) => state.chainEvents)
-  const issuers = useDemoStore((state) => state.issuers)
-  const lenders = useDemoStore((state) => state.lenders)
+  const storeEvents = useDemoStore((state) => state.chainEvents)
+  const storeIssuers = useDemoStore((state) => state.issuers)
+  const storeLenders = useDemoStore((state) => state.lenders)
+  const [events, setEvents] = useState<ChainEvent[]>(storeEvents)
+  const [issuers, setIssuers] = useState<Issuer[]>(storeIssuers)
+  const [lenders, setLenders] = useState<Lender[]>(storeLenders)
   const mandates = useDemoStore((state) => state.mandates)
   const activity = useDemoStore((state) => state.activity)
   const liveFeed = useDemoStore((state) => state.liveFeed)
@@ -49,6 +54,21 @@ export function ExplorerPortal() {
   const [timeRange, setTimeRange] = useState('all')
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
   const knownIds = useRef<Set<string> | null>(null)
+
+  useEffect(() => {
+    let active = true
+    void Promise.all([chain.getEvents(), chain.getIssuers(), chain.getLenders()])
+      .then(([nextEvents, nextIssuers, nextLenders]) => {
+        if (!active) return
+        setEvents(nextEvents)
+        setIssuers(nextIssuers)
+        setLenders(nextLenders)
+      })
+      .catch(() => {
+        // Fallback to store state if live chain reader is unconfigured
+      })
+    return () => { active = false }
+  }, [chain, storeEvents, storeIssuers, storeLenders])
 
   useEffect(() => {
     const currentIds = new Set(events.map((event) => event.id))

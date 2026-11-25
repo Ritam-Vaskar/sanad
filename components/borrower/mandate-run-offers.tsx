@@ -7,12 +7,12 @@ import { AlertTriangle, ArrowLeft, ArrowRight, BadgeCheck, Check, CheckCircle2, 
 import { toast } from 'sonner'
 import type { Borrower, Lender, Offer, RunStep } from '@/types'
 import { acceptOffer as acceptOfferApi, addMockReceipt, revokeMandate as revokeMandateApi, startRun } from '@/lib/api'
-import { offerAcceptanceMessage, signWalletMessage, unlockWalletVault } from '@/lib/crypto/wallet'
 import { downloadJsonFile } from '@/lib/download'
 import { buildAmortizationSchedule } from '@/lib/emi'
 import { formatDate, formatINR } from '@/lib/format'
-import { simulateRun } from '@/lib/sim/runSimulator'
 import { useDemoStore } from '@/lib/store/demo-store'
+import { useRunEvents } from '@/lib/runs'
+import { useWallet } from '@/lib/wallet'
 import { ConfirmDialog } from '@/components/shared/overlays'
 import { StatusBadge } from '@/components/shared/primitives'
 import { Badge } from '@/components/ui/badge'
@@ -49,6 +49,7 @@ export function MandateDetail({ mandateId, borrower, lenders, language }: Mandat
 
 export function RunScreen({ runId, lenders, language }: { runId: string; lenders: Lender[]; language: BorrowerLanguage }) {
   const router = useRouter()
+  const runEvents_source = useRunEvents()
   const run = useDemoStore((state) => state.runs.find((item) => item.id === runId))
   const allRunEvents = useDemoStore((state) => state.runEvents)
   const runEvents = allRunEvents[runId] ?? emptyRunEvents
@@ -71,7 +72,7 @@ export function RunScreen({ runId, lenders, language }: { runId: string; lenders
     }
     if (!['running', 'rejected', 'ready_for_decision'].includes(runStatus) || (runStatus === 'ready_for_decision' && existingEvents.length > 0)) return
     if (existingEvents.length > 0 && runStatus !== 'running' && runStatus !== 'rejected') return
-    const cancel = simulateRun(runId, (step) => {
+    const cancel = runEvents_source.subscribe(runId, (step) => {
       const current = useDemoStore.getState()
       const alreadySeen = (current.runEvents[runId] ?? []).some((event) => event.title === step.title && event.type === step.type && event.lenderId === step.lenderId)
       if (!alreadySeen) current.appendRunEvent(runId, step)
@@ -86,7 +87,7 @@ export function RunScreen({ runId, lenders, language }: { runId: string; lenders
     }, () => useDemoStore.getState().setRunStatus(runId, currentRun.rejection ? 'rejected' : 'ready_for_decision'))
     cancelSimulation.current = cancel
     return () => { cancel(); cancelSimulation.current = null }
-  }, [runId, runStatus])
+  }, [runId, runStatus, runEvents_source])
 
   if (!run) return <BorrowerEmpty title="Agent run not found" description="Create a permission with the assistant to begin a loan search." action={<Button nativeButton={false} role="link" render={<Link href="/borrower/assistant" />} size="sm">Open assistant</Button>} />
   const hasFinished = ['ready_for_decision', 'rejected', 'stopped', 'accepted'].includes(runStatus)
@@ -138,11 +139,11 @@ type OfferSheetState = 'schedule' | 'accept' | null
 
 export function OffersScreen({ runId, lenders, language }: { runId: string; lenders: Lender[]; language: BorrowerLanguage }) {
   const router = useRouter()
+  const wallet = useWallet()
   const run = useDemoStore((state) => state.runs.find((item) => item.id === runId))
   const allOffers = useDemoStore((state) => state.offers)
   const activity = useDemoStore((state) => state.activity)
   const walletVault = useDemoStore((state) => state.walletVault)
-  const markWalletUnlocked = useDemoStore((state) => state.unlockWallet)
   const offers = allOffers.filter((offer) => offer.runId === runId).sort((a, b) => a.totalCost - b.totalCost)
   const accepted = offers.find((offer) => offer.outcome === 'accepted') ?? null
   const acceptedTxHash = activity.find((item) => item.type === 'offer_accepted' && item.requestId === `req-${runId}-${accepted?.lenderId}`)?.txHash ?? ''
@@ -158,9 +159,8 @@ export function OffersScreen({ runId, lenders, language }: { runId: string; lend
     if (!selected || !run || !walletVault || !understood || passphrase.trim().length < 6 || signing) return
     setSigning(true)
     try {
-      await unlockWalletVault(passphrase, walletVault)
-      markWalletUnlocked()
-      const signature = await signWalletMessage(offerAcceptanceMessage(runId, selected))
+      await wallet.unlock(passphrase)
+      const signature = await wallet.signTypedData('Acceptance', { runId, id: selected.id, lenderId: selected.lenderId, principal: selected.principal, rate: selected.rate, tenure: selected.tenure, totalCost: selected.totalCost })
       await acceptOfferApi(runId, selected.id, signature)
       setSheet(null)
       toast.success('Your acceptance has been recorded.')
