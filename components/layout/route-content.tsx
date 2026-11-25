@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import { ArrowUpRight, BadgeCheck, Blocks, ChevronRight, ShieldCheck } from 'lucide-react'
-import { getBorrower, getCredentials, getLenders, getMandates, getChainEvents, getAdminOverview } from '@/lib/api/mock-api'
+import { getBorrower, getCredentials, getLenders, getMandates, getChainEvents, getAdminOverview } from '@/lib/api'
 import { formatINR } from '@/lib/format'
 import { useDemoStore } from '@/lib/store/demo-store'
 import { StatCard, Skeletons, EmptyState, StatusBadge } from '@/components/shared/primitives'

@@ -3,7 +3,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Check, ShieldCheck, Sparkles } from 'lucide-react'
-import { getBorrowers, getCredentials, getIssuers, getOffers, getLenderRequests, getActivity, getStatusList } from '@/lib/api/mock-api'
+import { getBorrowers, getCredentials, getIssuers, getOffers, getLenderRequests, getActivity, getStatusList } from '@/lib/api'
 import { formatINR } from '@/lib/format'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

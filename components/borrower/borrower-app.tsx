@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { getActivity, getBorrower, getCredentials, getIssuers, getLenders, getMandates } from '@/lib/api/mock-api'
+import { getActivity, getBorrower, getCredentials, getIssuers, getLenders, getMandates } from '@/lib/api'
 import { useDemoStore } from '@/lib/store/demo-store'
 import { BorrowerError, BorrowerSkeleton, BorrowerEmpty } from './borrower-ui'
 import { OnboardingFlow, BorrowerPassport } from './onboarding-passport'

@@ -212,7 +212,7 @@ export async function acceptOffer(runId: string, offerId: string, signature: str
   state.addActivity({ id: `offer-accepted-${Date.now()}`, type: 'offer_accepted', mandateId: run.mandateId, lenderId: offer.lenderId, requestId: `req-${runId}-${offer.lenderId}`, timestamp, description: 'Borrower accepted the final offer terms', txHash, block })
   state.addChainEvent({ id: `chain-offer-accepted-${Date.now()}`, type: 'OfferAccepted', txHash, block, timestamp, decoded: { offerId, lenderId: offer.lenderId, runId } })
   useDemoStore.setState((current) => ({ admin: { ...current.admin, chainStatus: { ...current.admin.chainStatus, blockHeight: block, dailyTransactionsUsed: current.admin.chainStatus.dailyTransactionsUsed + 1 } } }))
-  return { runId, offerId, accepted: true, txHash }
+  return { runId, offerId, accepted: true as const, txHash }
 }
 
 // Replaces GET /activity.
