@@ -1,8 +1,14 @@
 packages:
-  - .
+  - apps/*
+  - services/*
 
 pmOnFail: ignore
 
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
+  - fast-uri
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp

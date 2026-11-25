@@ -1,0 +1,16 @@
+{
+  "name": "sanad",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@12.3.4",
+  "scripts": {
+    "dev:web": "pnpm --filter sanad-web dev",
+    "build:web": "pnpm --filter sanad-web build",
+    "lint:web": "pnpm --filter sanad-web lint",
+    "check:web": "pnpm --filter sanad-web check",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "up": "docker compose up --build",
+    "down": "docker compose down"
+  }
+}

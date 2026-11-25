@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "PresentationRequest",
+  "title": "PresentationRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["nonce", "audience", "credentialTypes", "requestedClaims"],
+  "properties": {
+    "nonce": { "type": "string", "minLength": 1 },
+    "audience": { "type": "string", "minLength": 1 },
+    "credentialTypes": { "type": "array", "items": { "type": "string" } },
+    "requestedClaims": { "type": "array", "items": { "type": "string" } }
+  }
+}

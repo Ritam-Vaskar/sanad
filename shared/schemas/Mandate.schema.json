@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Mandate",
+  "title": "Mandate",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "borrower", "amountMax", "currency", "allowedActions", "disclosureMask", "expiresAt"],
+  "properties": {
+    "id": { "type": "string" },
+    "borrower": { "type": "string" },
+    "amountMax": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string" },
+    "allowedActions": { "type": "array", "items": { "type": "string" } },
+    "disclosureMask": { "type": "array", "items": { "type": "string" } },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}
