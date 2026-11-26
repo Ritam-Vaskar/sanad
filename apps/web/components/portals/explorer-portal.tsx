@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Activity, BadgeCheck, CalendarClock, FileCheck2, Landmark, Network, Search, ShieldCheck, ShieldX } from 'lucide-react'
-import type { ChainEvent } from '@/types'
+import type { ChainEvent, Issuer, Lender } from '@/types'
+import { useChain } from '@/lib/chain'
 import { openChainDetail } from '@/lib/chain-details'
 import { useDemoStore } from '@/lib/store/demo-store'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,15 +36,38 @@ function formatTimestamp(value: string) {
 }
 
 export function ExplorerPortal() {
+  const chain = useChain()
   const hydrated = useDemoStore((state) => state.hasHydrated)
-  const events = useDemoStore((state) => state.chainEvents)
-  const issuers = useDemoStore((state) => state.issuers)
-  const lenders = useDemoStore((state) => state.lenders)
+  const storeEvents = useDemoStore((state) => state.chainEvents)
+  const storeIssuers = useDemoStore((state) => state.issuers)
+  const storeLenders = useDemoStore((state) => state.lenders)
   const mandates = useDemoStore((state) => state.mandates)
   const activity = useDemoStore((state) => state.activity)
   const liveFeed = useDemoStore((state) => state.liveFeed)
   const setLiveFeed = useDemoStore((state) => state.setLiveFeed)
   const simulateTampering = useDemoStore((state) => state.admin.simulateTampering)
+  const [chainEvents, setChainEvents] = useState<ChainEvent[] | null>(null)
+  const [chainIssuers, setChainIssuers] = useState<Issuer[] | null>(null)
+  const [chainLenders, setChainLenders] = useState<Lender[] | null>(null)
+
+  useEffect(() => {
+    let active = true
+    Promise.all([chain.getEvents(), chain.getIssuers(), chain.getLenders()])
+      .then(([ev, iss, len]) => {
+        if (!active) return
+        setChainEvents(ev)
+        setChainIssuers(iss)
+        setChainLenders(len)
+      })
+      .catch(() => {
+        // Fallback to store data if chain reader fails or is a live stub
+      })
+    return () => { active = false }
+  }, [chain, storeEvents, storeIssuers, storeLenders])
+
+  const events = chainEvents ?? storeEvents
+  const issuers = chainIssuers ?? storeIssuers
+  const lenders = chainLenders ?? storeLenders
   const [search, setSearch] = useState('')
   const [eventType, setEventType] = useState('all')
   const [timeRange, setTimeRange] = useState('all')

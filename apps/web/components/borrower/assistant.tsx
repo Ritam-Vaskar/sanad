@@ -6,9 +6,9 @@ import { ArrowDown, ArrowRight, Check, ChevronDown, LockKeyhole, Minus, Plus, Se
 import { toast } from 'sonner'
 import type { Borrower, Lender, Mandate } from '@/types'
 import { createMandate, startRun } from '@/lib/api'
-import { mandateSigningMessage, signWalletMessage, unlockWalletVault } from '@/lib/crypto/wallet'
 import { formatINR } from '@/lib/format'
 import { useDemoStore } from '@/lib/store/demo-store'
+import { useWallet } from '@/lib/wallet'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -60,10 +60,10 @@ export function PermissionSlip({ draft, lenders, language, onAdjust, onReview }:
 
 export function AssistantScreen({ borrower, lenders, language }: { borrower: Borrower; lenders: Lender[]; language: BorrowerLanguage }) {
   const router = useRouter()
+  const wallet = useWallet()
   const speed = useDemoStore((state) => state.speed)
   const showTechnical = useDemoStore((state) => state.showTechnical)
   const walletVault = useDemoStore((state) => state.walletVault)
-  const markWalletUnlocked = useDemoStore((state) => state.unlockWallet)
   const [turns, setTurns] = useState<ChatTurn[]>([{ id: 'welcome', role: 'assistant', text: t(language, 'Tell me what you need, and I’ll prepare a permission for you to review.') }])
   const [draftText, setDraftText] = useState('')
   const [thinking, setThinking] = useState(-1)
@@ -106,8 +106,7 @@ export function AssistantScreen({ borrower, lenders, language }: { borrower: Bor
     if (!slip || !walletVault || passphrase.trim().length < 6 || signing) return
     setSigning(true)
     try {
-      await unlockWalletVault(passphrase, walletVault)
-      markWalletUnlocked()
+      await wallet.unlock(passphrase)
       const input = {
         borrowerId: borrower.id,
         purpose: 'vehicle_repair',
@@ -118,7 +117,7 @@ export function AssistantScreen({ borrower, lenders, language }: { borrower: Bor
         allowAccept: false,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       }
-      const signature = await signWalletMessage(mandateSigningMessage(input))
+      const signature = await wallet.signTypedData('Mandate', input)
       const permission = await createMandate({ ...input, signature })
       setMandate(permission)
       setReviewOpen(false)

@@ -1,0 +1,6 @@
+{
+  "network": "base-sepolia",
+  "chainId": 84532,
+  "SanadTrustRegistry": "0x0000000000000000000000000000000000000000",
+  "SanadMandateLedger": "0x0000000000000000000000000000000000000000"
+}
