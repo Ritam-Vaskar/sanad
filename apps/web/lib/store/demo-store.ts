@@ -71,7 +71,7 @@ const initialData = () => ({
   walletUnlocked: false,
   walletVault: null,
   walletOwnerId: null,
-  personaId: 'robin-das' as const,
+  personaId: 'rahul-das' as const,
   speed: 1 as DemoSpeed,
   showTechnical: false,
   liveFeed: false,

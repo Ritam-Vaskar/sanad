@@ -1,32 +1,332 @@
 [
-  { "id": "chain-01", "type": "IssuerRegistered", "txHash": "0x6e270d0a5f…e412", "block": 19845021, "timestamp": "2026-11-24T09:40:00.000Z", "decoded": { "issuerId": "issuer-kyc", "keyHash": "0x92fd…7b31" } },
-  { "id": "chain-02", "type": "DisclosureRecorded", "txHash": "0x0f4a6d8e93…34a1", "block": 19845021, "timestamp": "2026-11-24T09:40:00.000Z", "decoded": { "requestId": "req-qr-4821", "commitmentHash": "0x7e2b9ac04d…812f" } },
-  { "id": "chain-03", "type": "StatusRootUpdated", "txHash": "0x4a12bc09ef…88d0", "block": 19844970, "timestamp": "2026-11-24T09:31:10.000Z", "decoded": { "issuerId": "issuer-gig", "root": "0x8872…19a4" } },
-  { "id": "chain-04", "type": "DisclosureRecorded", "txHash": "0xc1330eab91…8ef0", "block": 19845024, "timestamp": "2026-11-24T09:42:00.000Z", "decoded": { "requestId": "req-gw-4821", "commitmentHash": "0x47b180ad12…0ca1" } },
-  { "id": "chain-05", "type": "MandateCreated", "txHash": "0x91ce45bf28a1…aa18", "block": 19844910, "timestamp": "2026-11-24T09:20:11.000Z", "decoded": { "mandateId": "mandate-robin-active", "mandateHash": "0x6a92d3f701bc…44f2" } },
-  { "id": "chain-06", "type": "LenderRegistered", "txHash": "0x137e34ad28…d9f2", "block": 19844800, "timestamp": "2026-11-24T09:02:00.000Z", "decoded": { "lenderId": "lender-a", "policyHash": "0x9acd…315f" } },
-  { "id": "chain-07", "type": "DisclosureRecorded", "txHash": "0x74f3a010e4…a824", "block": 19840114, "timestamp": "2026-11-23T16:12:00.000Z", "decoded": { "requestId": "req-qr-4752", "commitmentHash": "0x9c840f1b65…f072" } },
-  { "id": "chain-08", "type": "StatusRootUpdated", "txHash": "0x41ed42b8aa…2204", "block": 19840001, "timestamp": "2026-11-23T15:44:00.000Z", "decoded": { "issuerId": "issuer-kyc", "root": "0x11e3…b21a" } },
-  { "id": "chain-09", "type": "DisclosureRecorded", "txHash": "0x019d70c12a…332a", "block": 19837282, "timestamp": "2026-11-23T10:07:00.000Z", "decoded": { "requestId": "req-gw-4741", "commitmentHash": "0x81bd20c447…ee92" } },
-  { "id": "chain-10", "type": "MandateCreated", "txHash": "0x990ddac84b…7641", "block": 19835012, "timestamp": "2026-11-23T08:20:00.000Z", "decoded": { "mandateId": "mandate-demo-091", "mandateHash": "0x301d…7021" } },
-  { "id": "chain-11", "type": "DisclosureRecorded", "txHash": "0x20ae41b1bf…5da0", "block": 19830018, "timestamp": "2026-11-22T14:30:00.000Z", "decoded": { "requestId": "req-qr-4680", "commitmentHash": "0x165ad2c6aa…0105" } },
-  { "id": "chain-12", "type": "StatusRootUpdated", "txHash": "0xa624a1c8f3…1320", "block": 19825000, "timestamp": "2026-11-22T09:10:00.000Z", "decoded": { "issuerId": "issuer-aa", "root": "0x93af…d0f1" } },
-  { "id": "chain-13", "type": "DisclosureRecorded", "txHash": "0xe8b781d259…6371", "block": 19821447, "timestamp": "2026-11-21T11:45:00.000Z", "decoded": { "requestId": "req-gw-4632", "commitmentHash": "0xc2a1556e92…4b77" } },
-  { "id": "chain-14", "type": "MandateRevoked", "txHash": "0x8f31c320a5…2c48", "block": 19820001, "timestamp": "2026-11-21T09:04:00.000Z", "decoded": { "mandateId": "mandate-old-12", "mandateHash": "0x7f09…872e" } },
-  { "id": "chain-15", "type": "DisclosureRecorded", "txHash": "0x8f250abf6d…f310", "block": 19812936, "timestamp": "2026-11-20T15:24:00.000Z", "decoded": { "requestId": "req-qr-4519", "commitmentHash": "0x1b47cf602a…2fc4" } },
-  { "id": "chain-16", "type": "StatusRootUpdated", "txHash": "0x88a4bdcd20…1141", "block": 19810010, "timestamp": "2026-11-20T12:10:00.000Z", "decoded": { "issuerId": "issuer-gig", "root": "0x8872…19a4" } },
-  { "id": "chain-17", "type": "DisclosureRecorded", "txHash": "0x5a698a334e…cc45", "block": 19801102, "timestamp": "2026-11-19T08:54:00.000Z", "decoded": { "requestId": "req-gw-4402", "commitmentHash": "0x94d44f9ec3…3c11" } },
-  { "id": "chain-18", "type": "IssuerRegistered", "txHash": "0xd0ae7cf1a2…ca48", "block": 19798000, "timestamp": "2026-11-19T06:11:00.000Z", "decoded": { "issuerId": "issuer-aa", "keyHash": "0xa1d4…b860" } },
-  { "id": "chain-19", "type": "DisclosureRecorded", "txHash": "0x7b05e8a731…16f4", "block": 19792409, "timestamp": "2026-11-18T13:03:00.000Z", "decoded": { "requestId": "req-qr-4322", "commitmentHash": "0xd103890021…b7f0" } },
-  { "id": "chain-20", "type": "StatusRootUpdated", "txHash": "0xa80093bc12…13f0", "block": 19790000, "timestamp": "2026-11-18T08:30:00.000Z", "decoded": { "issuerId": "issuer-kyc", "root": "0x11e3…b21a" } },
-  { "id": "chain-21", "type": "DisclosureRecorded", "txHash": "0xd03841ae7e…c8b0", "block": 19784092, "timestamp": "2026-11-17T09:26:00.000Z", "decoded": { "requestId": "req-gw-4267", "commitmentHash": "0x403ca19261…db18" } },
-  { "id": "chain-22", "type": "LenderRegistered", "txHash": "0x1f8c6a5021…3302", "block": 19780010, "timestamp": "2026-11-17T07:15:00.000Z", "decoded": { "lenderId": "lender-b", "policyHash": "0x514d…39aa" } },
-  { "id": "chain-23", "type": "DisclosureRecorded", "txHash": "0x34b1d0f057…12ef", "block": 19775138, "timestamp": "2026-11-16T17:48:00.000Z", "decoded": { "requestId": "req-qr-4111", "commitmentHash": "0x617f26bd49…ab6a" } },
-  { "id": "chain-24", "type": "StatusRootUpdated", "txHash": "0x2b391ca89d…651e", "block": 19770000, "timestamp": "2026-11-16T11:00:00.000Z", "decoded": { "issuerId": "issuer-aa", "root": "0x93af…d0f1" } },
-  { "id": "chain-25", "type": "DisclosureRecorded", "txHash": "0x8bc9f18a8d…a81c", "block": 19764002, "timestamp": "2026-11-15T10:10:00.000Z", "decoded": { "requestId": "req-gw-3994", "commitmentHash": "0x28322ce50b…11ad" } },
-  { "id": "chain-26", "type": "StatusRootUpdated", "txHash": "0x2caef90316…7738", "block": 19760000, "timestamp": "2026-11-15T06:05:00.000Z", "decoded": { "issuerId": "issuer-gig", "root": "0x8872…19a4" } },
-  { "id": "chain-27", "type": "MandateCreated", "txHash": "0x446f3b118c99…087a", "block": 19755001, "timestamp": "2026-11-14T07:49:00.000Z", "decoded": { "mandateId": "mandate-demo-072", "mandateHash": "0x1e36…25c9" } },
-  { "id": "chain-28", "type": "DisclosureRecorded", "txHash": "0xf6d1048b1a…9e21", "block": 19755003, "timestamp": "2026-11-14T07:50:00.000Z", "decoded": { "requestId": "req-qr-3880", "commitmentHash": "0x56c190f1aa…b0a9" } },
-  { "id": "chain-29", "type": "LenderRegistered", "txHash": "0x8d81a42017…3261", "block": 19750000, "timestamp": "2026-11-14T06:00:00.000Z", "decoded": { "lenderId": "lender-a", "policyHash": "0x9acd…315f" } },
-  { "id": "chain-30", "type": "DisclosureRecorded", "txHash": "0x0244dbe67a…11d0", "block": 19746351, "timestamp": "2026-11-13T12:32:00.000Z", "decoded": { "requestId": "req-gw-3739", "commitmentHash": "0x7d1ab48c0a…771a" } }
+  {
+    "id": "chain-01",
+    "type": "IssuerRegistered",
+    "txHash": "0x6e270d0a5f…e412",
+    "block": 19845021,
+    "timestamp": "2026-11-24T09:40:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-kyc",
+      "keyHash": "0x92fd…7b31"
+    }
+  },
+  {
+    "id": "chain-02",
+    "type": "DisclosureRecorded",
+    "txHash": "0x0f4a6d8e93…34a1",
+    "block": 19845021,
+    "timestamp": "2026-11-24T09:40:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-4821",
+      "commitmentHash": "0x7e2b9ac04d…812f"
+    }
+  },
+  {
+    "id": "chain-03",
+    "type": "StatusRootUpdated",
+    "txHash": "0x4a12bc09ef…88d0",
+    "block": 19844970,
+    "timestamp": "2026-11-24T09:31:10.000Z",
+    "decoded": {
+      "issuerId": "issuer-gig",
+      "root": "0x8872…19a4"
+    }
+  },
+  {
+    "id": "chain-04",
+    "type": "DisclosureRecorded",
+    "txHash": "0xc1330eab91…8ef0",
+    "block": 19845024,
+    "timestamp": "2026-11-24T09:42:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-4821",
+      "commitmentHash": "0x47b180ad12…0ca1"
+    }
+  },
+  {
+    "id": "chain-05",
+    "type": "MandateCreated",
+    "txHash": "0x91ce45bf28a1…aa18",
+    "block": 19844910,
+    "timestamp": "2026-11-24T09:20:11.000Z",
+    "decoded": {
+      "mandateId": "mandate-rahul-active",
+      "mandateHash": "0x6a92d3f701bc…44f2"
+    }
+  },
+  {
+    "id": "chain-06",
+    "type": "LenderRegistered",
+    "txHash": "0x137e34ad28…d9f2",
+    "block": 19844800,
+    "timestamp": "2026-11-24T09:02:00.000Z",
+    "decoded": {
+      "lenderId": "lender-a",
+      "policyHash": "0x9acd…315f"
+    }
+  },
+  {
+    "id": "chain-07",
+    "type": "DisclosureRecorded",
+    "txHash": "0x74f3a010e4…a824",
+    "block": 19840114,
+    "timestamp": "2026-11-23T16:12:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-4752",
+      "commitmentHash": "0x9c840f1b65…f072"
+    }
+  },
+  {
+    "id": "chain-08",
+    "type": "StatusRootUpdated",
+    "txHash": "0x41ed42b8aa…2204",
+    "block": 19840001,
+    "timestamp": "2026-11-23T15:44:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-kyc",
+      "root": "0x11e3…b21a"
+    }
+  },
+  {
+    "id": "chain-09",
+    "type": "DisclosureRecorded",
+    "txHash": "0x019d70c12a…332a",
+    "block": 19837282,
+    "timestamp": "2026-11-23T10:07:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-4741",
+      "commitmentHash": "0x81bd20c447…ee92"
+    }
+  },
+  {
+    "id": "chain-10",
+    "type": "MandateCreated",
+    "txHash": "0x990ddac84b…7641",
+    "block": 19835012,
+    "timestamp": "2026-11-23T08:20:00.000Z",
+    "decoded": {
+      "mandateId": "mandate-demo-091",
+      "mandateHash": "0x301d…7021"
+    }
+  },
+  {
+    "id": "chain-11",
+    "type": "DisclosureRecorded",
+    "txHash": "0x20ae41b1bf…5da0",
+    "block": 19830018,
+    "timestamp": "2026-11-22T14:30:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-4680",
+      "commitmentHash": "0x165ad2c6aa…0105"
+    }
+  },
+  {
+    "id": "chain-12",
+    "type": "StatusRootUpdated",
+    "txHash": "0xa624a1c8f3…1320",
+    "block": 19825000,
+    "timestamp": "2026-11-22T09:10:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-aa",
+      "root": "0x93af…d0f1"
+    }
+  },
+  {
+    "id": "chain-13",
+    "type": "DisclosureRecorded",
+    "txHash": "0xe8b781d259…6371",
+    "block": 19821447,
+    "timestamp": "2026-11-21T11:45:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-4632",
+      "commitmentHash": "0xc2a1556e92…4b77"
+    }
+  },
+  {
+    "id": "chain-14",
+    "type": "MandateRevoked",
+    "txHash": "0x8f31c320a5…2c48",
+    "block": 19820001,
+    "timestamp": "2026-11-21T09:04:00.000Z",
+    "decoded": {
+      "mandateId": "mandate-old-12",
+      "mandateHash": "0x7f09…872e"
+    }
+  },
+  {
+    "id": "chain-15",
+    "type": "DisclosureRecorded",
+    "txHash": "0x8f250abf6d…f310",
+    "block": 19812936,
+    "timestamp": "2026-11-20T15:24:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-4519",
+      "commitmentHash": "0x1b47cf602a…2fc4"
+    }
+  },
+  {
+    "id": "chain-16",
+    "type": "StatusRootUpdated",
+    "txHash": "0x88a4bdcd20…1141",
+    "block": 19810010,
+    "timestamp": "2026-11-20T12:10:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-gig",
+      "root": "0x8872…19a4"
+    }
+  },
+  {
+    "id": "chain-17",
+    "type": "DisclosureRecorded",
+    "txHash": "0x5a698a334e…cc45",
+    "block": 19801102,
+    "timestamp": "2026-11-19T08:54:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-4402",
+      "commitmentHash": "0x94d44f9ec3…3c11"
+    }
+  },
+  {
+    "id": "chain-18",
+    "type": "IssuerRegistered",
+    "txHash": "0xd0ae7cf1a2…ca48",
+    "block": 19798000,
+    "timestamp": "2026-11-19T06:11:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-aa",
+      "keyHash": "0xa1d4…b860"
+    }
+  },
+  {
+    "id": "chain-19",
+    "type": "DisclosureRecorded",
+    "txHash": "0x7b05e8a731…16f4",
+    "block": 19792409,
+    "timestamp": "2026-11-18T13:03:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-4322",
+      "commitmentHash": "0xd103890021…b7f0"
+    }
+  },
+  {
+    "id": "chain-20",
+    "type": "StatusRootUpdated",
+    "txHash": "0xa80093bc12…13f0",
+    "block": 19790000,
+    "timestamp": "2026-11-18T08:30:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-kyc",
+      "root": "0x11e3…b21a"
+    }
+  },
+  {
+    "id": "chain-21",
+    "type": "DisclosureRecorded",
+    "txHash": "0xd03841ae7e…c8b0",
+    "block": 19784092,
+    "timestamp": "2026-11-17T09:26:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-4267",
+      "commitmentHash": "0x403ca19261…db18"
+    }
+  },
+  {
+    "id": "chain-22",
+    "type": "LenderRegistered",
+    "txHash": "0x1f8c6a5021…3302",
+    "block": 19780010,
+    "timestamp": "2026-11-17T07:15:00.000Z",
+    "decoded": {
+      "lenderId": "lender-b",
+      "policyHash": "0x514d…39aa"
+    }
+  },
+  {
+    "id": "chain-23",
+    "type": "DisclosureRecorded",
+    "txHash": "0x34b1d0f057…12ef",
+    "block": 19775138,
+    "timestamp": "2026-11-16T17:48:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-4111",
+      "commitmentHash": "0x617f26bd49…ab6a"
+    }
+  },
+  {
+    "id": "chain-24",
+    "type": "StatusRootUpdated",
+    "txHash": "0x2b391ca89d…651e",
+    "block": 19770000,
+    "timestamp": "2026-11-16T11:00:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-aa",
+      "root": "0x93af…d0f1"
+    }
+  },
+  {
+    "id": "chain-25",
+    "type": "DisclosureRecorded",
+    "txHash": "0x8bc9f18a8d…a81c",
+    "block": 19764002,
+    "timestamp": "2026-11-15T10:10:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-3994",
+      "commitmentHash": "0x28322ce50b…11ad"
+    }
+  },
+  {
+    "id": "chain-26",
+    "type": "StatusRootUpdated",
+    "txHash": "0x2caef90316…7738",
+    "block": 19760000,
+    "timestamp": "2026-11-15T06:05:00.000Z",
+    "decoded": {
+      "issuerId": "issuer-gig",
+      "root": "0x8872…19a4"
+    }
+  },
+  {
+    "id": "chain-27",
+    "type": "MandateCreated",
+    "txHash": "0x446f3b118c99…087a",
+    "block": 19755001,
+    "timestamp": "2026-11-14T07:49:00.000Z",
+    "decoded": {
+      "mandateId": "mandate-demo-072",
+      "mandateHash": "0x1e36…25c9"
+    }
+  },
+  {
+    "id": "chain-28",
+    "type": "DisclosureRecorded",
+    "txHash": "0xf6d1048b1a…9e21",
+    "block": 19755003,
+    "timestamp": "2026-11-14T07:50:00.000Z",
+    "decoded": {
+      "requestId": "req-qr-3880",
+      "commitmentHash": "0x56c190f1aa…b0a9"
+    }
+  },
+  {
+    "id": "chain-29",
+    "type": "LenderRegistered",
+    "txHash": "0x8d81a42017…3261",
+    "block": 19750000,
+    "timestamp": "2026-11-14T06:00:00.000Z",
+    "decoded": {
+      "lenderId": "lender-a",
+      "policyHash": "0x9acd…315f"
+    }
+  },
+  {
+    "id": "chain-30",
+    "type": "DisclosureRecorded",
+    "txHash": "0x0244dbe67a…11d0",
+    "block": 19746351,
+    "timestamp": "2026-11-13T12:32:00.000Z",
+    "decoded": {
+      "requestId": "req-gw-3739",
+      "commitmentHash": "0x7d1ab48c0a…771a"
+    }
+  }
 ]

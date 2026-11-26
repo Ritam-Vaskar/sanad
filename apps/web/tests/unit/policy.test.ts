@@ -3,8 +3,8 @@ import { buildVerificationChecklist } from '../../lib/verification'
 import { seedData } from '../../lib/api/seed-data'
 import type { LenderRequest } from '../../types'
 
-const borrower = seedData.borrowers.find((item) => item.id === 'robin-das')
-const credential = seedData.credentials.find((item) => item.id === 'cred-robin-kyc')
+const borrower = seedData.borrowers.find((item) => item.id === 'rahul-das')
+const credential = seedData.credentials.find((item) => item.id === 'cred-rahul-kyc')
 
 if (!borrower || !credential) {
   throw new Error('The Rahul borrower and KYC credential fixtures are required.')

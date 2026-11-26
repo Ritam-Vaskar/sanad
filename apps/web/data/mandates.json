@@ -1,5 +1,78 @@
 [
-  { "id": "mandate-robin-active", "borrowerId": "robin-das", "purpose": "vehicle_repair", "maxAmount": 50000, "maxEmi": 3000, "allowedLenders": ["lender-a", "lender-b"], "disclosures": { "kycStatus": true, "ageOver21": true, "incomeThreshold": true, "incomeBand": false, "cashflowStability": true, "employerName": false, "rawStatements": false, "exactIncome": false }, "allowAccept": false, "expiresAt": "2026-11-25T14:00:00.000Z", "status": "active", "mandateHash": "0x6a92d3f701bc…44f2", "txHash": "0x91ce45bf28a1…aa18" },
-  { "id": "mandate-priya-expired", "borrowerId": "priya-nair", "purpose": "medical_expense", "maxAmount": 25000, "maxEmi": 2000, "allowedLenders": ["lender-a"], "disclosures": { "kycStatus": true, "ageOver21": true, "incomeThreshold": true, "incomeBand": false, "cashflowStability": false, "employerName": false, "rawStatements": false, "exactIncome": false }, "allowAccept": false, "expiresAt": "2026-10-12T10:00:00.000Z", "status": "expired", "mandateHash": "0x1e36bc704dfa…25c9", "txHash": "0x446f3b118c99…087a" },
-  { "id": "mandate-suresh-revoked", "borrowerId": "suresh-patil", "purpose": "home_repair", "maxAmount": 35000, "maxEmi": 3500, "allowedLenders": ["lender-b"], "disclosures": { "kycStatus": true, "ageOver21": true, "incomeThreshold": true, "incomeBand": false, "cashflowStability": true, "employerName": false, "rawStatements": false, "exactIncome": false }, "allowAccept": false, "expiresAt": "2026-11-22T09:00:00.000Z", "status": "revoked", "mandateHash": "0x7f09b841cc41…872e", "txHash": "0x8f31c320a5b1…2c48" }
+  {
+    "id": "mandate-rahul-active",
+    "borrowerId": "rahul-das",
+    "purpose": "vehicle_repair",
+    "maxAmount": 50000,
+    "maxEmi": 3000,
+    "allowedLenders": [
+      "lender-a",
+      "lender-b"
+    ],
+    "disclosures": {
+      "kycStatus": true,
+      "ageOver21": true,
+      "incomeThreshold": true,
+      "incomeBand": false,
+      "cashflowStability": true,
+      "employerName": false,
+      "rawStatements": false,
+      "exactIncome": false
+    },
+    "allowAccept": false,
+    "expiresAt": "2026-11-25T14:00:00.000Z",
+    "status": "active",
+    "mandateHash": "0x6a92d3f701bc…44f2",
+    "txHash": "0x91ce45bf28a1…aa18"
+  },
+  {
+    "id": "mandate-priya-expired",
+    "borrowerId": "priya-nair",
+    "purpose": "medical_expense",
+    "maxAmount": 25000,
+    "maxEmi": 2000,
+    "allowedLenders": [
+      "lender-a"
+    ],
+    "disclosures": {
+      "kycStatus": true,
+      "ageOver21": true,
+      "incomeThreshold": true,
+      "incomeBand": false,
+      "cashflowStability": false,
+      "employerName": false,
+      "rawStatements": false,
+      "exactIncome": false
+    },
+    "allowAccept": false,
+    "expiresAt": "2026-10-12T10:00:00.000Z",
+    "status": "expired",
+    "mandateHash": "0x1e36bc704dfa…25c9",
+    "txHash": "0x446f3b118c99…087a"
+  },
+  {
+    "id": "mandate-suresh-revoked",
+    "borrowerId": "suresh-patil",
+    "purpose": "home_repair",
+    "maxAmount": 35000,
+    "maxEmi": 3500,
+    "allowedLenders": [
+      "lender-b"
+    ],
+    "disclosures": {
+      "kycStatus": true,
+      "ageOver21": true,
+      "incomeThreshold": true,
+      "incomeBand": false,
+      "cashflowStability": true,
+      "employerName": false,
+      "rawStatements": false,
+      "exactIncome": false
+    },
+    "allowAccept": false,
+    "expiresAt": "2026-11-22T09:00:00.000Z",
+    "status": "revoked",
+    "mandateHash": "0x7f09b841cc41…872e",
+    "txHash": "0x8f31c320a5b1…2c48"
+  }
 ]

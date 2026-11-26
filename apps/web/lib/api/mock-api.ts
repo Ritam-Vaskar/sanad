@@ -156,7 +156,7 @@ export async function startRun(mandateId: string) {
           : undefined
   const rejection = firstFailedCheck
     ? { reason: firstFailedCheck.reason, lenderId: mandate.allowedLenders[0] ?? 'lender-a' }
-    : personaRejection ?? (inactiveLenderId ? { reason: 'This lender is no longer active in the trust registry.', lenderId: inactiveLenderId } : state.personaId !== 'robin-das' ? { reason: 'No eligible offers are available for this synthetic persona.', lenderId: mandate.allowedLenders[0] ?? 'lender-a' } : undefined)
+    : personaRejection ?? (inactiveLenderId ? { reason: 'This lender is no longer active in the trust registry.', lenderId: inactiveLenderId } : state.personaId !== 'rahul-das' ? { reason: 'No eligible offers are available for this synthetic persona.', lenderId: mandate.allowedLenders[0] ?? 'lender-a' } : undefined)
   const newOffers = rejection ? [] : offerTemplates.map((offer): Offer => ({ ...offer, id: `${offer.id}-${startedId}`, runId: startedId, outcome: 'sent' }))
   const started: AgentRun = { ...runTemplate, id: startedId, mandateId, status: 'running', steps: structuredClone(templateRun.steps), rejection }
   const requestTime = new Date().toISOString()

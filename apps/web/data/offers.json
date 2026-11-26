@@ -1,4 +1,36 @@
 [
-  { "id": "offer-a-robin", "runId": "run-robin", "lenderId": "lender-a", "principal": 40000, "rate": 20, "tenure": 18, "emi": 2590.53, "processingFee": 600, "gst": 108, "totalInterest": 6629.54, "totalRepayment": 46629.54, "totalCost": 7337.54, "fitsEmiLimit": true, "offerHash": "0x0f4a6d8e93bc…34a1", "assistantExplanation": "Lowest total cost: ₹7,337.54 in interest and fees. The ₹2,590.53 EMI stays within your ₹3,000 limit." },
-  { "id": "offer-b-robin", "runId": "run-robin", "lenderId": "lender-b", "principal": 50000, "rate": 24, "tenure": 24, "emi": 2643.55, "processingFee": 1000, "gst": 180, "totalInterest": 13445.2, "totalRepayment": 63445.2, "totalCost": 14625.2, "fitsEmiLimit": true, "offerHash": "0x835db4e210a9…04e7", "assistantExplanation": "Higher amount with a ₹2,643.55 EMI, but total cost is ₹14,625.20. Compare the extra ₹10,000 against the higher overall cost." }
+  {
+    "id": "offer-a-rahul",
+    "runId": "run-rahul",
+    "lenderId": "lender-a",
+    "principal": 40000,
+    "rate": 20,
+    "tenure": 18,
+    "emi": 2590.53,
+    "processingFee": 600,
+    "gst": 108,
+    "totalInterest": 6629.54,
+    "totalRepayment": 46629.54,
+    "totalCost": 7337.54,
+    "fitsEmiLimit": true,
+    "offerHash": "0x0f4a6d8e93bc…34a1",
+    "assistantExplanation": "Lowest total cost: ₹7,337.54 in interest and fees. The ₹2,590.53 EMI stays within your ₹3,000 limit."
+  },
+  {
+    "id": "offer-b-rahul",
+    "runId": "run-rahul",
+    "lenderId": "lender-b",
+    "principal": 50000,
+    "rate": 24,
+    "tenure": 24,
+    "emi": 2643.55,
+    "processingFee": 1000,
+    "gst": 180,
+    "totalInterest": 13445.2,
+    "totalRepayment": 63445.2,
+    "totalCost": 14625.2,
+    "fitsEmiLimit": true,
+    "offerHash": "0x835db4e210a9…04e7",
+    "assistantExplanation": "Higher amount with a ₹2,643.55 EMI, but total cost is ₹14,625.20. Compare the extra ₹10,000 against the higher overall cost."
+  }
 ]

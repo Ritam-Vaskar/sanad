@@ -21,13 +21,15 @@ const sampleSteps: RunStep[] = [
 ]
 
 export function ComponentGallery() {
-  const samples = useQuery({ queryKey: ['design-gallery'], queryFn: async () => {
-    const [borrowers, issuers, credentials, offers, requests, activity, statusList] = await Promise.all([getBorrowers(), getIssuers(), getCredentials('robin-das'), getOffers('run-robin'), getLenderRequests('lender-a'), getActivity('robin-das'), getStatusList('issuer-gig')])
-    return { borrowers, issuers, credentials, offers, requests, activity, statusList }
-  } })
+  const samples = useQuery({
+    queryKey: ['design-gallery'], queryFn: async () => {
+      const [borrowers, issuers, credentials, offers, requests, activity, statusList] = await Promise.all([getBorrowers(), getIssuers(), getCredentials('rahul-das'), getOffers('run-rahul'), getLenderRequests('lender-a'), getActivity('rahul-das'), getStatusList('issuer-gig')])
+      return { borrowers, issuers, credentials, offers, requests, activity, statusList }
+    }
+  })
   if (samples.isLoading || !samples.data) return <div className="mx-auto max-w-6xl"><GalleryHeading /><Skeletons rows={5} /></div>
   const { borrowers, issuers, credentials, offers, requests, activity, statusList } = samples.data
-  const borrower = borrowers.find((item) => item.id === 'robin-das')!
+  const borrower = borrowers.find((item) => item.id === 'rahul-das')!
   const issuersById = Object.fromEntries(issuers.map((issuer) => [issuer.id, issuer.name]))
   const lenders = { 'lender-a': 'QuickRepair Micro Finance', 'lender-b': 'Gramin Working Capital NBFC' }
   const receipt = activity.find((item) => item.id === 'receipt-01') as unknown as ConsentReceipt

@@ -20,7 +20,7 @@ import { PortalHeading, PortalQueryState, SectionHeading } from './portal-shared
 import { FunnelChart, RequestsAreaChart } from './portal-charts'
 
 const legacySections: Record<string, string> = { '/requests': 'requests', '/policy': 'policy', '/issuers': 'issuers', '/offers': 'offers', '/compliance': 'compliance', '/settings': 'settings' }
-const subjectAliases: Record<string, string> = { '4821': 'robin-das', '4752': 'priya-nair', '4741': 'robin-das', '4680': 'kavita-rao', '4632': 'suresh-patil', '4519': 'imran-sheikh', '4402': 'suresh-patil', '4322': 'robin-das', '4267': 'imran-sheikh', '4111': 'priya-nair', '3994': 'suresh-patil' }
+const subjectAliases: Record<string, string> = { '4821': 'rahul-das', '4752': 'priya-nair', '4741': 'rahul-das', '4680': 'kavita-rao', '4632': 'suresh-patil', '4519': 'imran-sheikh', '4402': 'suresh-patil', '4322': 'rahul-das', '4267': 'imran-sheikh', '4111': 'priya-nair', '3994': 'suresh-patil' }
 
 function lenderRoute(path: string) {
   if (legacySections[path] || path.startsWith('/requests/')) return { lenderId: 'lender-a', section: path.startsWith('/requests/') ? 'request-detail' : legacySections[path], requestId: path.startsWith('/requests/') ? path.slice('/requests/'.length) : undefined }
@@ -60,10 +60,12 @@ export function LenderPortal({ path }: { path: string }) {
   const offers = useDemoStore((state) => state.offers)
   const activity = useDemoStore((state) => state.activity)
   const policies = useDemoStore((state) => state.policies)
-  const query = useQuery({ queryKey: ['lender-portal', lenderId, personaId], queryFn: async () => {
-    const [requests, policy, registry, people, audit, proofs] = await Promise.all([getLenderRequests(lenderId), getPolicies(lenderId), getIssuers(), getBorrowers(), getAuditLog(), getCredentials(personaId)])
-    return { requests, policy, registry, people, audit, proofs }
-  } })
+  const query = useQuery({
+    queryKey: ['lender-portal', lenderId, personaId], queryFn: async () => {
+      const [requests, policy, registry, people, audit, proofs] = await Promise.all([getLenderRequests(lenderId), getPolicies(lenderId), getIssuers(), getBorrowers(), getAuditLog(), getCredentials(personaId)])
+      return { requests, policy, registry, people, audit, proofs }
+    }
+  })
   const lender = lenders.find((item) => item.id === lenderId)
   const requests = lenderRequests.filter((request) => request.lenderId === lenderId)
   const heading = section === 'overview' ? 'Lending overview' : section === 'requests' ? 'Borrower requests' : section === 'request-detail' ? 'Request review' : section === 'policy' ? 'Underwriting policy' : section === 'issuers' ? 'Trusted issuers' : section === 'offers' ? 'Loan offers' : section === 'compliance' ? 'Compliance controls' : 'Workspace settings'
