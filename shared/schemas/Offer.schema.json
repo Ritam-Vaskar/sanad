@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Offer",
+  "title": "Offer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "lenderId", "amount", "emi", "apr", "currency", "expiresAt"],
+  "properties": {
+    "id": { "type": "string" },
+    "lenderId": { "type": "string" },
+    "amount": { "type": "number", "minimum": 0 },
+    "emi": { "type": "number", "minimum": 0 },
+    "apr": { "type": "number", "minimum": 0 },
+    "currency": { "type": "string" },
+    "expiresAt": { "type": "string", "format": "date-time" }
+  }
+}

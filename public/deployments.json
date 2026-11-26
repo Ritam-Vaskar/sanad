@@ -1,6 +1,0 @@
-{
-  "SanadTrustRegistry": "0x0000000000000000000000000000000000000000",
-  "SanadMandateLedger": "0x0000000000000000000000000000000000000000",
-  "network": "base-sepolia",
-  "_note": "Replace placeholder addresses with deployed contract addresses before enabling NEXT_PUBLIC_LIVE_GROUPS=chain"
-}

@@ -1,8 +1,19 @@
 packages:
-  - .
+  - apps/*
+  - services/*
 
 pmOnFail: ignore
 
 minimumReleaseAgeExclude:
   - '@next/*'
   - next
+  - fast-uri
+  - vitest
+  - '@vitest/*'
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp
+
+allowBuilds:
+  esbuild: set this to true or false
