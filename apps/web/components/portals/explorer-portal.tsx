@@ -75,21 +75,6 @@ export function ExplorerPortal() {
   const knownIds = useRef<Set<string> | null>(null)
 
   useEffect(() => {
-    let active = true
-    void Promise.all([chain.getEvents(), chain.getIssuers(), chain.getLenders()])
-      .then(([nextEvents, nextIssuers, nextLenders]) => {
-        if (!active) return
-        setEvents(nextEvents)
-        setIssuers(nextIssuers)
-        setLenders(nextLenders)
-      })
-      .catch(() => {
-        // Fallback to store state if live chain reader is unconfigured
-      })
-    return () => { active = false }
-  }, [chain, storeEvents, storeIssuers, storeLenders])
-
-  useEffect(() => {
     const currentIds = new Set(events.map((event) => event.id))
     if (!knownIds.current) {
       knownIds.current = currentIds
