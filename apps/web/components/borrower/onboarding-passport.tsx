@@ -50,7 +50,7 @@ export function OnboardingFlow() {
   }
 
   async function unlockSanadId() {
-    if (!walletVault || walletBusy) return
+    if (walletBusy) return
     setWalletBusy(true)
     setWalletError('')
     try {
